@@ -43,6 +43,18 @@ class CharacterParser:
         
         return sorted(skills)  # Sort alphabetically for consistent output
     
+    def get_racial_bonuses(self):
+        """Extract racial ability score bonuses."""
+        bonuses = {}
+        race_modifiers = self.data['data']['modifiers']['race']
+        
+        for modifier in race_modifiers:
+            if modifier['type'] == 'bonus' and modifier['subType'].endswith('-score'):
+                ability = modifier['subType'].replace('-score', '')
+                bonuses[ability] = modifier['value']
+        
+        return bonuses
+    
     def get_stats(self):
         """Extract ability scores."""
         stats = {}
@@ -66,7 +78,8 @@ class CharacterParser:
         return {
             "species": self.data['data']['race']['fullName'],
             "languages": self.get_languages(),
-            "skills": self.get_racial_skills()
+            "skills": self.get_racial_skills(),
+            "ability_bonuses": self.get_racial_bonuses()
         }
     
     def save_output(self, output_data, filename):
