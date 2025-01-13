@@ -15,6 +15,10 @@ class CharacterParser:
         """Extract character name."""
         return self.data['data']['name']
     
+    def get_username(self):
+        """Extract player username."""
+        return self.data['data']['username']
+    
     def save_output(self, output_data, filename):
         """Save parsed data to output file."""
         output_path = Path('output') / filename

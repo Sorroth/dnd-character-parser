@@ -28,3 +28,8 @@ def test_character_name_direct():
     """Test that character name is correctly parsed from JSON."""
     parser = CharacterParser('data/Miriam Hopps.json')
     assert parser.get_name() == 'Miriam Hopps' 
+
+def test_player_username():
+    """Test that player username is correctly parsed from JSON."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    assert parser.get_username() == 'whitneyowilkinson' 
