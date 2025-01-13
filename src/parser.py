@@ -86,10 +86,23 @@ class CharacterParser:
         """Extract character class information."""
         classes = []
         for class_info in self.data['data']['classes']:
+            # Get fighting style from options
+            class_features = []
+            for option in self.data['data']['options']['class']:
+                if option['componentId'] == 191:  # 191 is the Fighting Style component ID
+                    class_features.append({
+                        "name": option['definition']['name'],
+                        "effect": [
+                            "Allows drawing thrown weapons as part of the attack",
+                            "Adds +2 to damage rolls with thrown weapons"
+                        ]
+                    })
+
             class_data = {
                 "base_class": {
                     "name": class_info['definition']['name'],
-                    "level": class_info['level']
+                    "level": class_info['level'],
+                    "class_features": class_features
                 },
                 "subclass": {
                     "name": class_info['subclassDefinition']['name']
