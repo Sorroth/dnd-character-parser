@@ -31,6 +31,13 @@ class CharacterParser:
         
         return sorted(languages)  # Sort alphabetically for consistent output
     
+    def get_race(self):
+        """Extract race information."""
+        return {
+            "species": self.data['data']['race']['fullName'],
+            "languages": self.get_languages()
+        }
+    
     def save_output(self, output_data, filename):
         """Save parsed data to output file."""
         output_path = Path('output') / filename

@@ -18,13 +18,13 @@ def main():
         # Get character info
         name = parser.get_name()
         username = parser.get_username()
-        languages = parser.get_languages()
+        race = parser.get_race()
         
         # Create output data
         output_data = {
             'player_username': username,
             'character_name': name,
-            'languages': languages
+            'race': race
         }
         
         # Save to output file
@@ -32,7 +32,8 @@ def main():
         print(f"Successfully parsed character info:")
         print(f"Player Username: {username}")
         print(f"Character Name: {name}")
-        print(f"Languages: {', '.join(languages)}")
+        print(f"Race: {race['species']}")
+        print(f"Languages: {', '.join(race['languages'])}")
         
     except Exception as e:
         print(f"Error: {str(e)}")
