@@ -15,14 +15,16 @@ def main():
         # Initialize parser
         parser = CharacterParser(input_file)
         
-        # Get character name and username
+        # Get character info
         name = parser.get_name()
         username = parser.get_username()
+        languages = parser.get_languages()
         
-        # Create output data with username first
+        # Create output data
         output_data = {
             'player_username': username,
-            'character_name': name
+            'character_name': name,
+            'languages': languages
         }
         
         # Save to output file
@@ -30,6 +32,7 @@ def main():
         print(f"Successfully parsed character info:")
         print(f"Player Username: {username}")
         print(f"Character Name: {name}")
+        print(f"Languages: {', '.join(languages)}")
         
     except Exception as e:
         print(f"Error: {str(e)}")

@@ -19,6 +19,18 @@ class CharacterParser:
         """Extract player username."""
         return self.data['data']['username']
     
+    def get_languages(self):
+        """Extract known languages."""
+        languages = []
+        race_modifiers = self.data['data']['modifiers']['race']
+        
+        for modifier in race_modifiers:
+            if modifier['type'] == 'language':
+                language = modifier['subType'].capitalize()
+                languages.append(language)
+        
+        return sorted(languages)  # Sort alphabetically for consistent output
+    
     def save_output(self, output_data, filename):
         """Save parsed data to output file."""
         output_path = Path('output') / filename

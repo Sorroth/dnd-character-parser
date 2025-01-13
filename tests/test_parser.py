@@ -8,14 +8,16 @@ def test_character_info_output():
     # Initialize parser
     parser = CharacterParser('data/Miriam Hopps.json')
     
-    # Get name and username
+    # Get character info
     name = parser.get_name()
     username = parser.get_username()
+    languages = parser.get_languages()
     
     # Create output data
     output_data = {
         'player_username': username,
-        'character_name': name
+        'character_name': name,
+        'languages': languages
     }
     
     # Save to output file
@@ -29,6 +31,7 @@ def test_character_info_output():
         saved_data = json.load(file)
         assert saved_data['player_username'] == 'whitneyowilkinson'
         assert saved_data['character_name'] == 'Miriam Hopps'
+        assert set(saved_data['languages']) == {'Common', 'Draconic'}
 
 def test_character_name_direct():
     """Test that character name is correctly parsed from JSON."""
@@ -38,4 +41,10 @@ def test_character_name_direct():
 def test_player_username():
     """Test that player username is correctly parsed from JSON."""
     parser = CharacterParser('data/Miriam Hopps.json')
-    assert parser.get_username() == 'whitneyowilkinson' 
+    assert parser.get_username() == 'whitneyowilkinson'
+
+def test_languages():
+    """Test that languages are correctly parsed from JSON."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    languages = parser.get_languages()
+    assert set(languages) == {'Common', 'Draconic'} 
