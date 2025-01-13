@@ -15,17 +15,21 @@ def main():
         # Initialize parser
         parser = CharacterParser(input_file)
         
-        # Get character name
+        # Get character name and username
         name = parser.get_name()
+        username = parser.get_username()
         
-        # Create output data
+        # Create output data with username first
         output_data = {
+            'player_username': username,
             'character_name': name
         }
         
         # Save to output file
-        parser.save_output(output_data, 'character_name.json')
-        print(f"Successfully parsed character name: {name}")
+        parser.save_output(output_data, 'character_info.json')
+        print(f"Successfully parsed character info:")
+        print(f"Player Username: {username}")
+        print(f"Character Name: {name}")
         
     except Exception as e:
         print(f"Error: {str(e)}")
