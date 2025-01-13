@@ -18,12 +18,14 @@ def main():
         # Get character info
         name = parser.get_name()
         username = parser.get_username()
+        stats = parser.get_stats()
         race = parser.get_race()
         
         # Create output data
         output_data = {
             'player_username': username,
             'character_name': name,
+            'stats': stats,
             'race': race
         }
         
@@ -32,6 +34,9 @@ def main():
         print(f"Successfully parsed character info:")
         print(f"Player Username: {username}")
         print(f"Character Name: {name}")
+        print("Ability Scores:")
+        for stat, value in stats.items():
+            print(f"  {stat.capitalize()}: {value}")
         print(f"Race: {race['species']}")
         print(f"Languages: {', '.join(race['languages'])}")
         

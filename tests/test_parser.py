@@ -11,12 +11,14 @@ def test_character_info_output():
     # Get character info
     name = parser.get_name()
     username = parser.get_username()
+    stats = parser.get_stats()
     race = parser.get_race()
     
     # Create output data
     output_data = {
         'player_username': username,
         'character_name': name,
+        'stats': stats,
         'race': race
     }
     
@@ -31,6 +33,14 @@ def test_character_info_output():
         saved_data = json.load(file)
         assert saved_data['player_username'] == 'whitneyowilkinson'
         assert saved_data['character_name'] == 'Miriam Hopps'
+        assert saved_data['stats'] == {
+            'strength': 18,
+            'dexterity': 18,
+            'constitution': 18,
+            'intelligence': 9,
+            'wisdom': 13,
+            'charisma': 15
+        }
         assert saved_data['race']['species'] == 'Variant Human'
         assert set(saved_data['race']['languages']) == {'Common', 'Draconic'}
         assert saved_data['race']['skills'] == ['Perception']
@@ -44,6 +54,19 @@ def test_player_username():
     """Test that player username is correctly parsed from JSON."""
     parser = CharacterParser('data/Miriam Hopps.json')
     assert parser.get_username() == 'whitneyowilkinson'
+
+def test_stats():
+    """Test that stats are correctly parsed from JSON."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    stats = parser.get_stats()
+    assert stats == {
+        'strength': 18,
+        'dexterity': 18,
+        'constitution': 18,
+        'intelligence': 9,
+        'wisdom': 13,
+        'charisma': 15
+    }
 
 def test_race():
     """Test that race is correctly parsed from JSON."""
