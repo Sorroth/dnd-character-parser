@@ -82,6 +82,22 @@ class CharacterParser:
             "skills": self.get_racial_skills()
         }
     
+    def get_classes(self):
+        """Extract character class information."""
+        classes = []
+        for class_info in self.data['data']['classes']:
+            class_data = {
+                "base_class": {
+                    "name": class_info['definition']['name'],
+                    "level": class_info['level']
+                },
+                "subclass": {
+                    "name": class_info['subclassDefinition']['name']
+                } if class_info.get('subclassDefinition') else None
+            }
+            classes.append(class_data)
+        return classes
+    
     def save_output(self, output_data, filename):
         """Save parsed data to output file."""
         output_path = Path('output') / filename
@@ -89,3 +105,18 @@ class CharacterParser:
         
         with open(output_path, 'w', encoding='utf-8') as file:
             json.dump(output_data, file, indent=2) 
+    
+    def parse(self):
+        """Parse character data into desired format."""
+        return {
+            "player_username": self.get_username(),
+            "character_name": self.get_name(),
+            "stats": self.get_stats(),
+            "race": {
+                "species": self.get_race(),
+                "languages": self.get_languages(),
+                "ability_bonuses": self.get_racial_bonuses(),
+                "skills": self.get_racial_skills()
+            },
+            "classes": self.get_classes()
+        } 
