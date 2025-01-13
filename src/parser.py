@@ -34,7 +34,8 @@ class CharacterParser:
     def get_race(self):
         """Extract race information."""
         return {
-            "species": self.data['data']['race']['fullName']
+            "species": self.data['data']['race']['fullName'],
+            "languages": self.get_languages()
         }
     
     def save_output(self, output_data, filename):
