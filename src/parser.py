@@ -31,11 +31,24 @@ class CharacterParser:
         
         return sorted(languages)  # Sort alphabetically for consistent output
     
+    def get_racial_skills(self):
+        """Extract racial skill proficiencies."""
+        skills = []
+        race_modifiers = self.data['data']['modifiers']['race']
+        
+        for modifier in race_modifiers:
+            if modifier['type'] == 'proficiency' and 'subType' in modifier:
+                skill = modifier['subType'].capitalize()
+                skills.append(skill)
+        
+        return sorted(skills)  # Sort alphabetically for consistent output
+    
     def get_race(self):
         """Extract race information."""
         return {
             "species": self.data['data']['race']['fullName'],
-            "languages": self.get_languages()
+            "languages": self.get_languages(),
+            "skills": self.get_racial_skills()
         }
     
     def save_output(self, output_data, filename):

@@ -33,6 +33,7 @@ def test_character_info_output():
         assert saved_data['character_name'] == 'Miriam Hopps'
         assert saved_data['race']['species'] == 'Variant Human'
         assert set(saved_data['race']['languages']) == {'Common', 'Draconic'}
+        assert saved_data['race']['skills'] == ['Perception']
 
 def test_character_name_direct():
     """Test that character name is correctly parsed from JSON."""
@@ -49,4 +50,5 @@ def test_race():
     parser = CharacterParser('data/Miriam Hopps.json')
     race = parser.get_race()
     assert race['species'] == 'Variant Human'
-    assert set(race['languages']) == {'Common', 'Draconic'} 
+    assert set(race['languages']) == {'Common', 'Draconic'}
+    assert race['skills'] == ['Perception'] 
