@@ -13,13 +13,15 @@ def test_character_info_output():
     username = parser.get_username()
     stats = parser.get_stats()
     race = parser.get_race()
+    classes = parser.get_classes()
     
     # Create output data
     output_data = {
         'player_username': username,
         'character_name': name,
         'stats': stats,
-        'race': race
+        'race': race,
+        'classes': classes
     }
     
     # Save to output file
@@ -48,6 +50,11 @@ def test_character_info_output():
             'strength': 1,
             'dexterity': 1
         }
+        assert len(saved_data['classes']) == 1
+        fighter = saved_data['classes'][0]
+        assert fighter['base_class']['name'] == 'Fighter'
+        assert fighter['base_class']['level'] == 4
+        assert fighter['subclass']['name'] == 'Echo Knight'
 
 def test_character_name_direct():
     """Test that character name is correctly parsed from JSON."""
@@ -82,4 +89,17 @@ def test_race():
     assert race['ability_bonuses'] == {
         'strength': 1,
         'dexterity': 1
-    } 
+    }
+
+def test_classes():
+    """Test that classes are correctly parsed from JSON."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    classes = parser.get_classes()
+    
+    assert isinstance(classes, list)
+    assert len(classes) == 1
+    
+    fighter = classes[0]
+    assert fighter['base_class']['name'] == 'Fighter'
+    assert fighter['base_class']['level'] == 4
+    assert fighter['subclass']['name'] == 'Echo Knight' 
