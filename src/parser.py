@@ -43,6 +43,24 @@ class CharacterParser:
         
         return sorted(skills)  # Sort alphabetically for consistent output
     
+    def get_stats(self):
+        """Extract ability scores."""
+        stats = {}
+        stat_names = {
+            1: "strength",
+            2: "dexterity",
+            3: "constitution",
+            4: "intelligence",
+            5: "wisdom",
+            6: "charisma"
+        }
+        
+        for stat in self.data['data']['stats']:
+            stat_name = stat_names[stat['id']]
+            stats[stat_name] = stat['value']
+        
+        return stats
+    
     def get_race(self):
         """Extract race information."""
         return {
