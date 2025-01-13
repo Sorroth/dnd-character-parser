@@ -3,6 +3,11 @@ from pathlib import Path
 import pytest
 from src.parser import CharacterParser
 
+@pytest.fixture
+def parser():
+    """Create a parser instance for testing."""
+    return CharacterParser('data/Miriam Hopps.json')
+
 def test_character_info_output():
     """Test that character info is correctly parsed and saved to file."""
     # Initialize parser
@@ -102,4 +107,50 @@ def test_classes():
     fighter = classes[0]
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
+    
+    # Test class features
+    features = fighter['base_class']['class_features']
+    assert len(features) == 1
+    
+    fighting_style = features[0]
+    assert fighting_style['name'] == 'Thrown Weapon Fighting'
+    assert fighting_style['effect'] == [
+        "Allows drawing thrown weapons as part of the attack",
+        "Adds +2 to damage rolls with thrown weapons"
+    ]
+    
+    assert fighter['subclass']['name'] == 'Echo Knight'
+
+def test_parse_output_structure(parser):
+    """Test the complete parsed output structure."""
+    result = parser.parse()
+    
+    # Check top level keys
+    assert set(result.keys()) == {
+        'player_username', 
+        'character_name', 
+        'stats', 
+        'race',
+        'classes'
+    }
+    
+    # Check classes structure
+    assert isinstance(result['classes'], list)
+    assert len(result['classes']) == 1
+    
+    fighter = result['classes'][0]
+    assert fighter['base_class']['name'] == 'Fighter'
+    assert fighter['base_class']['level'] == 4
+    
+    # Check class features
+    features = fighter['base_class']['class_features']
+    assert len(features) == 1
+    
+    fighting_style = features[0]
+    assert fighting_style['name'] == 'Thrown Weapon Fighting'
+    assert fighting_style['effect'] == [
+        "Allows drawing thrown weapons as part of the attack",
+        "Adds +2 to damage rolls with thrown weapons"
+    ]
+    
     assert fighter['subclass']['name'] == 'Echo Knight' 
