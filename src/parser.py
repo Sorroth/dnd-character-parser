@@ -78,8 +78,8 @@ class CharacterParser:
         return {
             "species": self.data['data']['race']['fullName'],
             "languages": self.get_languages(),
-            "skills": self.get_racial_skills(),
-            "ability_bonuses": self.get_racial_bonuses()
+            "ability_bonuses": self.get_racial_bonuses(),
+            "skills": self.get_racial_skills()
         }
     
     def save_output(self, output_data, filename):
