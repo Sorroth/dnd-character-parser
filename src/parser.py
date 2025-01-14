@@ -82,27 +82,48 @@ class CharacterParser:
             "skills": self.get_racial_skills()
         }
     
+    def get_class_proficiencies(self):
+        """Extract class proficiencies from modifiers."""
+        proficiencies = []
+        class_modifiers = self.data['data']['modifiers'].get('class', [])
+        
+        for modifier in class_modifiers:
+            if modifier['type'] == 'proficiency':
+                # Convert subType from 'light-armor' to 'Light Armor'
+                prof_name = modifier['subType'].replace('-', ' ').title()
+                proficiencies.append({
+                    "name": prof_name,
+                    "description": [f"Proficiency in {prof_name}"]
+                })
+        
+        return proficiencies
+    
     def get_classes(self):
         """Extract character class information."""
         classes = []
         for class_info in self.data['data']['classes']:
             # Get fighting style from options
-            class_features = []
+            class_bonuses = []
+            
+            # Add fighting style bonuses
             for option in self.data['data']['options']['class']:
                 if option['componentId'] == 191:  # 191 is the Fighting Style component ID
-                    class_features.append({
+                    class_bonuses.append({
                         "name": option['definition']['name'],
-                        "effect": [
+                        "description": [
                             "Allows drawing thrown weapons as part of the attack",
                             "Adds +2 to damage rolls with thrown weapons"
                         ]
                     })
+            
+            # Add proficiency bonuses
+            class_bonuses.extend(self.get_class_proficiencies())
 
             class_data = {
                 "base_class": {
                     "name": class_info['definition']['name'],
                     "level": class_info['level'],
-                    "class_features": class_features
+                    "class_bonuses": class_bonuses
                 },
                 "subclass": {
                     "name": class_info['subclassDefinition']['name']
@@ -125,11 +146,6 @@ class CharacterParser:
             "player_username": self.get_username(),
             "character_name": self.get_name(),
             "stats": self.get_stats(),
-            "race": {
-                "species": self.get_race(),
-                "languages": self.get_languages(),
-                "ability_bonuses": self.get_racial_bonuses(),
-                "skills": self.get_racial_skills()
-            },
+            "racial_bonuses": self.get_race(),
             "classes": self.get_classes()
         } 
