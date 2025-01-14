@@ -98,6 +98,45 @@ class CharacterParser:
         
         return proficiencies
     
+    def get_class_features(self, class_info):
+        """Extract class features from class definition."""
+        features = []
+        
+        # Features to exclude
+        excluded_features = {
+            "Fighting Style",
+            "Martial Archetype",
+            "Ability Score Improvement",
+            "Hit Points",
+            "Equipment",
+            "Proficiencies"
+        }
+        
+        # Get class features that are available at or below current level
+        current_level = class_info['level']
+        class_features = class_info['definition'].get('classFeatures', [])
+        
+        for feature in class_features:
+            if feature['requiredLevel'] <= current_level and feature['name'] not in excluded_features:
+                # Clean up the description by removing HTML tags
+                description = feature['description']
+                description = description.replace('<p>', '').replace('</p>', '')
+                description = description.replace('<br />', '\n')
+                description = description.replace('<ul>', '').replace('</ul>', '')
+                description = description.replace('<li>', '• ').replace('</li>', '')
+                description = description.replace('<strong>', '').replace('</strong>', '')
+                description = description.replace('<span class="Serif-Character-Style_Bold-Serif">', '').replace('</span>', '')
+                
+                # Split description into lines and remove empty ones
+                description_lines = [line.strip() for line in description.split('\n') if line.strip()]
+                
+                features.append({
+                    "name": feature['name'],
+                    "description": description_lines
+                })
+        
+        return features
+    
     def get_classes(self):
         """Extract character class information."""
         classes = []
@@ -118,6 +157,9 @@ class CharacterParser:
             
             # Add proficiency bonuses
             class_bonuses.extend(self.get_class_proficiencies())
+            
+            # Add class features
+            class_bonuses.extend(self.get_class_features(class_info))
 
             class_data = {
                 "base_class": {

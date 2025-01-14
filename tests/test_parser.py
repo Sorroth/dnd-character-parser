@@ -193,3 +193,45 @@ def test_parse_output_structure(parser):
     assert armor_prof['description'] == ["Proficiency in Light Armor"]
     
     assert fighter['subclass']['name'] == 'Echo Knight' 
+
+def test_class_features():
+    """Test that class features are correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    classes = parser.get_classes()
+    
+    fighter = classes[0]
+    bonuses = fighter['base_class']['class_bonuses']
+    
+    # Check for specific class features
+    expected_features = [
+        "Second Wind",
+        "Action Surge"
+    ]
+    
+    excluded_features = [
+        "Fighting Style",
+        "Martial Archetype",
+        "Ability Score Improvement",
+        "Hit Points",
+        "Equipment",
+        "Proficiencies"
+    ]
+    
+    feature_names = [bonus["name"] for bonus in bonuses]
+    
+    # Check that expected features are present
+    for feature in expected_features:
+        assert feature in feature_names
+    
+    # Check that excluded features are not present
+    for feature in excluded_features:
+        assert feature not in feature_names
+    
+    # Check specific feature details
+    second_wind = next(bonus for bonus in bonuses if bonus["name"] == "Second Wind")
+    assert any("regain hit points equal to 1d10 + your fighter level" in line 
+              for line in second_wind["description"])
+    
+    action_surge = next(bonus for bonus in bonuses if bonus["name"] == "Action Surge")
+    assert any("take one additional action" in line 
+              for line in action_surge["description"]) 
