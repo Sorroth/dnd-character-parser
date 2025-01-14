@@ -96,6 +96,35 @@ def test_race():
         'dexterity': 1
     }
 
+def test_class_proficiencies():
+    """Test that class proficiencies are correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    proficiencies = parser.get_class_proficiencies()
+    
+    # Check that we get all expected proficiencies
+    expected_proficiencies = [
+        "Light Armor",
+        "Medium Armor",
+        "Heavy Armor",
+        "Shields",
+        "Simple Weapons",
+        "Martial Weapons",
+        "Strength Saving Throws",
+        "Constitution Saving Throws",
+        "Acrobatics",
+        "Athletics"
+    ]
+    
+    prof_names = [prof["name"] for prof in proficiencies]
+    assert sorted(prof_names) == sorted(expected_proficiencies)
+    
+    # Check format of proficiencies
+    for prof in proficiencies:
+        assert "name" in prof
+        assert "description" in prof
+        assert len(prof["description"]) == 1
+        assert prof["description"][0] == f"Proficiency in {prof['name']}"
+
 def test_classes():
     """Test that classes are correctly parsed from JSON."""
     parser = CharacterParser('data/Miriam Hopps.json')
@@ -108,16 +137,22 @@ def test_classes():
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
     
-    # Test class features
-    features = fighter['base_class']['class_features']
-    assert len(features) == 1
+    # Test class bonuses
+    bonuses = fighter['base_class']['class_bonuses']
     
-    fighting_style = features[0]
-    assert fighting_style['name'] == 'Thrown Weapon Fighting'
-    assert fighting_style['effect'] == [
+    # Should have at least 9 bonuses (1 fighting style + 8 proficiencies)
+    assert len(bonuses) >= 9
+    
+    # Check fighting style
+    fighting_style = next(bonus for bonus in bonuses if bonus['name'] == 'Thrown Weapon Fighting')
+    assert fighting_style['description'] == [
         "Allows drawing thrown weapons as part of the attack",
         "Adds +2 to damage rolls with thrown weapons"
     ]
+    
+    # Check a proficiency
+    armor_prof = next(bonus for bonus in bonuses if bonus['name'] == 'Light Armor')
+    assert armor_prof['description'] == ["Proficiency in Light Armor"]
     
     assert fighter['subclass']['name'] == 'Echo Knight'
 
@@ -130,7 +165,7 @@ def test_parse_output_structure(parser):
         'player_username', 
         'character_name', 
         'stats', 
-        'race',
+        'racial_bonuses',
         'classes'
     }
     
@@ -142,15 +177,19 @@ def test_parse_output_structure(parser):
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
     
-    # Check class features
-    features = fighter['base_class']['class_features']
-    assert len(features) == 1
+    # Check class bonuses
+    bonuses = fighter['base_class']['class_bonuses']
+    assert len(bonuses) >= 9  # 1 fighting style + 8 proficiencies
     
-    fighting_style = features[0]
-    assert fighting_style['name'] == 'Thrown Weapon Fighting'
-    assert fighting_style['effect'] == [
+    # Check fighting style is present
+    fighting_style = next(bonus for bonus in bonuses if bonus['name'] == 'Thrown Weapon Fighting')
+    assert fighting_style['description'] == [
         "Allows drawing thrown weapons as part of the attack",
         "Adds +2 to damage rolls with thrown weapons"
     ]
+    
+    # Check a proficiency is present
+    armor_prof = next(bonus for bonus in bonuses if bonus['name'] == 'Light Armor')
+    assert armor_prof['description'] == ["Proficiency in Light Armor"]
     
     assert fighter['subclass']['name'] == 'Echo Knight' 
