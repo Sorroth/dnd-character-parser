@@ -17,7 +17,7 @@ def test_character_info_output():
     name = parser.get_name()
     username = parser.get_username()
     stats = parser.get_stats()
-    racial_bonuses = parser.get_race()  # Keep the data but rename the key
+    race = parser.get_race()
     classes = parser.get_classes()
     background = parser.get_background()
     
@@ -26,9 +26,9 @@ def test_character_info_output():
         'player_username': username,
         'character_name': name,
         'stats': stats,
-        'racial_bonuses': racial_bonuses,  # Changed from 'race'
+        'race': race,
         'classes': classes,
-        'background': background  # Added background
+        'background': background
     }
     
     # Save to output file
@@ -50,10 +50,10 @@ def test_character_info_output():
             'wisdom': 13,
             'charisma': 15
         }
-        assert saved_data['racial_bonuses']['species'] == 'Variant Human'  # Changed from race to racial_bonuses
-        assert set(saved_data['racial_bonuses']['languages']) == {'Common', 'Draconic'}
-        assert saved_data['racial_bonuses']['skills'] == ['Perception']
-        assert saved_data['racial_bonuses']['ability_bonuses'] == {
+        assert saved_data['race']['name'] == 'Variant Human'
+        assert set(saved_data['race']['languages']) == {'Common', 'Draconic'}
+        assert saved_data['race']['skills'] == ['Perception']
+        assert saved_data['race']['ability_bonuses'] == {
             'strength': 1,
             'dexterity': 1
         }
@@ -90,7 +90,7 @@ def test_race():
     """Test that race is correctly parsed from JSON."""
     parser = CharacterParser('data/Miriam Hopps.json')
     race = parser.get_race()
-    assert race['species'] == 'Variant Human'
+    assert race['name'] == 'Variant Human'
     assert set(race['languages']) == {'Common', 'Draconic'}
     assert race['skills'] == ['Perception']
     assert race['ability_bonuses'] == {
@@ -166,11 +166,26 @@ def test_parse_output_structure(parser):
     assert set(result.keys()) == {
         'player_username',
         'character_name',
+        'characteristics',
         'stats',
-        'racial_bonuses',  # Changed from 'race'
+        'race',
         'classes',
         'background'
     }
+    
+    # Verify characteristics structure
+    assert result['characteristics'] == {
+        "gender": "Female",
+        "faith": "Chauntea",
+        "age": 20,
+        "hair": "Brown",
+        "eyes": "Brown",
+        "skin": "White",
+        "height": "6'0\"",
+        "weight": 200
+    }
+    
+    # Remove characteristics verification
     
     # Check classes structure
     assert isinstance(result['classes'], list)
@@ -312,3 +327,19 @@ def test_background():
     
     # Convert both sides to sets for comparison to avoid order issues
     assert set(expected_proficiencies).issubset(set(bonus_names)) 
+
+def test_characteristics():
+    """Test that characteristics are correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    characteristics = parser.get_characteristics()
+    
+    assert characteristics == {
+        "gender": "Female",
+        "faith": "Chauntea",
+        "age": 20,
+        "hair": "Brown",
+        "eyes": "Brown",
+        "skin": "White",
+        "height": "6'0\"",
+        "weight": 200
+    } 
