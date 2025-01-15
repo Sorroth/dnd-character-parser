@@ -17,16 +17,18 @@ def test_character_info_output():
     name = parser.get_name()
     username = parser.get_username()
     stats = parser.get_stats()
-    race = parser.get_race()
+    racial_bonuses = parser.get_race()  # Keep the data but rename the key
     classes = parser.get_classes()
+    background = parser.get_background()
     
     # Create output data
     output_data = {
         'player_username': username,
         'character_name': name,
         'stats': stats,
-        'race': race,
-        'classes': classes
+        'racial_bonuses': racial_bonuses,  # Changed from 'race'
+        'classes': classes,
+        'background': background  # Added background
     }
     
     # Save to output file
@@ -48,10 +50,10 @@ def test_character_info_output():
             'wisdom': 13,
             'charisma': 15
         }
-        assert saved_data['race']['species'] == 'Variant Human'
-        assert set(saved_data['race']['languages']) == {'Common', 'Draconic'}
-        assert saved_data['race']['skills'] == ['Perception']
-        assert saved_data['race']['ability_bonuses'] == {
+        assert saved_data['racial_bonuses']['species'] == 'Variant Human'  # Changed from race to racial_bonuses
+        assert set(saved_data['racial_bonuses']['languages']) == {'Common', 'Draconic'}
+        assert saved_data['racial_bonuses']['skills'] == ['Perception']
+        assert saved_data['racial_bonuses']['ability_bonuses'] == {
             'strength': 1,
             'dexterity': 1
         }
@@ -162,11 +164,12 @@ def test_parse_output_structure(parser):
     
     # Check top level keys
     assert set(result.keys()) == {
-        'player_username', 
-        'character_name', 
-        'stats', 
-        'racial_bonuses',
-        'classes'
+        'player_username',
+        'character_name',
+        'stats',
+        'racial_bonuses',  # Changed from 'race'
+        'classes',
+        'background'
     }
     
     # Check classes structure
@@ -279,12 +282,33 @@ def test_background():
     
     assert background['name'] == 'Urban Bounty Hunter'
     
-    # Check feature
-    assert background['feature']['name'] == 'Ear to the Ground'
-    assert len(background['feature']['description']) == 1
-    assert "segment of society" in background['feature']['description'][0]
+    # Check description
+    assert 'description' in background
+    assert isinstance(background['description'], list)
+    assert len(background['description']) == 3  # Three paragraphs
+    assert "Before you became an adventurer" in background['description'][0]
+    assert "You might be a cunning thief-catcher" in background['description'][1]
+    assert "As a member of an adventuring party" in background['description'][2]
     
-    # Verify equipment is not included
-    assert 'equipment' not in background
-    # Verify proficiencies are not included
-    assert 'proficiencies' not in background 
+    # Check background bonuses
+    assert 'background_bonuses' in background
+    assert isinstance(background['background_bonuses'], list)
+    
+    # Get all bonus names
+    bonus_names = [bonus['name'] for bonus in background['background_bonuses']]
+    
+    # Check Ear to the Ground feature
+    assert 'Ear to the Ground' in bonus_names
+    ear_to_ground = next(b for b in background['background_bonuses'] if b['name'] == 'Ear to the Ground')
+    assert "segment of society" in ear_to_ground['description'][0]
+    
+    # Check proficiencies
+    expected_proficiencies = [
+        'Deception',
+        'Medicine',
+        "Thieves' Tools",
+        'Dragonchess Set'
+    ]
+    
+    # Convert both sides to sets for comparison to avoid order issues
+    assert set(expected_proficiencies).issubset(set(bonus_names)) 

@@ -229,6 +229,29 @@ class CharacterParser:
         with open(output_path, 'w', encoding='utf-8') as file:
             json.dump(output_data, file, indent=2) 
     
+    def get_background_proficiencies(self):
+        """Extract background proficiencies from modifiers."""
+        proficiencies = []
+        background_modifiers = self.data['data']['modifiers'].get('background', [])
+        
+        for modifier in background_modifiers:
+            if modifier['type'] == 'proficiency':
+                # Convert subType from 'thieves-tools' to 'Thieves' Tools'
+                prof_name = modifier['subType'].replace('-', ' ').title()
+                
+                # Special handling for thieves' tools
+                if "Thieves Tools" in prof_name:
+                    prof_name = "Thieves' Tools"
+                elif "Tools" in prof_name:
+                    prof_name = prof_name.replace("Tools", "' Tools")
+                
+                proficiencies.append({
+                    "name": prof_name,
+                    "description": [f"Proficiency in {prof_name}"]
+                })
+        
+        return proficiencies
+    
     def get_background(self):
         """Extract character background information."""
         background_data = self.data['data'].get('background', {})
@@ -241,17 +264,34 @@ class CharacterParser:
         def clean_text(text):
             if not text:
                 return ""
-            text = text.replace('<p>', '').replace('</p>', '')
+            text = text.replace('<p class="Core-Styles_Core-Body">', '')
+            text = text.replace('<p class="Core-Styles_Core-Body--Extra-Space-After-">', '')
+            text = text.replace('</p>', '')
             text = text.replace('<span class="No-Break">', '').replace('</span>', '')
             text = text.replace('<br />', '\n')
+            text = text.replace('&ldquo;', '"').replace('&mdash;', '—')
+            text = text.replace('&ucirc;', 'û')
             return text.strip()
         
-        return {
-            "name": definition['name'],
-            "feature": {
+        # Split the description into paragraphs
+        description = clean_text(definition['shortDescription']).split('\n')
+        description = [para for para in description if para.strip()]
+        
+        # Start with the Ear to the Ground feature
+        background_bonuses = [
+            {
                 "name": definition['featureName'],
                 "description": [clean_text(definition['featureDescription'])]
             }
+        ]
+        
+        # Add proficiencies
+        background_bonuses.extend(self.get_background_proficiencies())
+        
+        return {
+            "name": definition['name'],
+            "description": description,
+            "background_bonuses": background_bonuses
         }
     
     def parse(self):
