@@ -117,31 +117,31 @@ def test_race():
 def test_class_proficiencies():
     """Test that class proficiencies are correctly parsed."""
     parser = CharacterParser('data/Miriam Hopps.json')
-    proficiencies = parser.get_class_proficiencies()
+    classes = parser.get_classes()
+    
+    # Get fighter proficiencies
+    fighter = classes[0]['base_class']
+    proficiencies = fighter['proficiencies']
     
     # Check that we get all expected proficiencies
     expected_proficiencies = [
-        "Light Armor",
-        "Medium Armor",
+        "Acrobatics",
+        "Athletics",
+        "Constitution Saving Throws",
         "Heavy Armor",
+        "Light Armor",
+        "Martial Weapons",
+        "Medium Armor",
         "Shields",
         "Simple Weapons",
-        "Martial Weapons",
-        "Strength Saving Throws",
-        "Constitution Saving Throws",
-        "Acrobatics",
-        "Athletics"
+        "Strength Saving Throws"
     ]
     
-    prof_names = [prof["name"] for prof in proficiencies]
-    assert sorted(prof_names) == sorted(expected_proficiencies)
+    assert sorted(proficiencies) == expected_proficiencies
     
-    # Check format of proficiencies
-    for prof in proficiencies:
-        assert "name" in prof
-        assert "description" in prof
-        assert len(prof["description"]) == 1
-        assert prof["description"][0] == f"Proficiency in {prof['name']}"
+    # Check that proficiencies are not in class_bonuses
+    bonus_names = [bonus['name'] for bonus in fighter['class_bonuses']]
+    assert not any('Proficiency' in name for name in bonus_names)
 
 def test_classes():
     """Test that classes are correctly parsed from JSON."""
@@ -155,11 +155,11 @@ def test_classes():
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
     
-    # Test class bonuses
+    # Test class bonuses (now without proficiencies)
     bonuses = fighter['base_class']['class_bonuses']
     
-    # Should have at least 9 bonuses (1 fighting style + 8 proficiencies)
-    assert len(bonuses) >= 9
+    # Should have 3 bonuses (fighting style + second wind + action surge)
+    assert len(bonuses) == 3
     
     # Check fighting style
     fighting_style = next(bonus for bonus in bonuses if bonus['name'] == 'Thrown Weapon Fighting')
@@ -168,9 +168,9 @@ def test_classes():
         "Adds +2 to damage rolls with thrown weapons"
     ]
     
-    # Check a proficiency
-    armor_prof = next(bonus for bonus in bonuses if bonus['name'] == 'Light Armor')
-    assert armor_prof['description'] == ["Proficiency in Light Armor"]
+    # Check proficiencies are in their own array
+    proficiencies = fighter['base_class']['proficiencies']
+    assert len(proficiencies) == 10  # Should have 10 proficiencies
     
     assert fighter['subclass']['name'] == 'Echo Knight'
 
@@ -213,9 +213,13 @@ def test_parse_output_structure(parser):
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
     
-    # Check class bonuses
+    # Check class bonuses (now without proficiencies)
     bonuses = fighter['base_class']['class_bonuses']
-    assert len(bonuses) >= 9  # 1 fighting style + 8 proficiencies
+    assert len(bonuses) == 3  # fighting style + second wind + action surge
+    
+    # Check proficiencies are in their own array
+    proficiencies = fighter['base_class']['proficiencies']
+    assert len(proficiencies) == 10
     
     # Check fighting style is present
     fighting_style = next(bonus for bonus in bonuses if bonus['name'] == 'Thrown Weapon Fighting')
@@ -224,11 +228,7 @@ def test_parse_output_structure(parser):
         "Adds +2 to damage rolls with thrown weapons"
     ]
     
-    # Check a proficiency is present
-    armor_prof = next(bonus for bonus in bonuses if bonus['name'] == 'Light Armor')
-    assert armor_prof['description'] == ["Proficiency in Light Armor"]
-    
-    assert fighter['subclass']['name'] == 'Echo Knight' 
+    assert fighter['subclass']['name'] == 'Echo Knight'
 
 def test_class_features():
     """Test that class features are correctly parsed."""
