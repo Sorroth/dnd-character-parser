@@ -76,7 +76,7 @@ class CharacterParser:
     def get_race(self):
         """Extract race information."""
         return {
-            "species": self.data['data']['race']['fullName'],
+            "name": self.data['data']['race']['fullName'],
             "languages": self.get_languages(),
             "ability_bonuses": self.get_racial_bonuses(),
             "skills": self.get_racial_skills()
@@ -294,13 +294,28 @@ class CharacterParser:
             "background_bonuses": background_bonuses
         }
     
+    def get_characteristics(self):
+        """Extract character characteristics."""
+        data = self.data['data']
+        return {
+            "gender": data['gender'],
+            "faith": data['faith'],
+            "age": data['age'],
+            "hair": data['hair'],
+            "eyes": data['eyes'],
+            "skin": data['skin'],
+            "height": data['height'],
+            "weight": data['weight']
+        }
+    
     def parse(self):
         """Parse character data into desired format."""
         return {
             "player_username": self.get_username(),
             "character_name": self.get_name(),
+            "characteristics": self.get_characteristics(),
             "stats": self.get_stats(),
-            "racial_bonuses": self.get_race(),
+            "race": self.get_race(),
             "classes": self.get_classes(),
             "background": self.get_background()
         } 
