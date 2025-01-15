@@ -13,23 +13,8 @@ def test_character_info_output():
     # Initialize parser
     parser = CharacterParser('data/Miriam Hopps.json')
     
-    # Get character info
-    name = parser.get_name()
-    username = parser.get_username()
-    stats = parser.get_stats()
-    race = parser.get_race()
-    classes = parser.get_classes()
-    background = parser.get_background()
-    
-    # Create output data
-    output_data = {
-        'player_username': username,
-        'character_name': name,
-        'stats': stats,
-        'race': race,
-        'classes': classes,
-        'background': background
-    }
+    # Get character info directly using parse()
+    output_data = parser.parse()
     
     # Save to output file
     parser.save_output(output_data, 'character_info.json')
@@ -40,8 +25,25 @@ def test_character_info_output():
     # Read the output file and verify contents
     with open('output/character_info.json', 'r', encoding='utf-8') as file:
         saved_data = json.load(file)
+        
+        # Verify all top-level keys are present
+        assert set(saved_data.keys()) == {
+            'player_username',
+            'character_name',
+            'characteristics',
+            'stats',
+            'race',
+            'classes',
+            'feats',
+            'background',
+            'inventory'
+        }
+        
+        # Verify basic content
         assert saved_data['player_username'] == 'whitneyowilkinson'
         assert saved_data['character_name'] == 'Miriam Hopps'
+        
+        # Verify stats
         assert saved_data['stats'] == {
             'strength': 18,
             'dexterity': 18,
@@ -50,6 +52,8 @@ def test_character_info_output():
             'wisdom': 13,
             'charisma': 15
         }
+        
+        # Verify race
         assert saved_data['race']['name'] == 'Variant Human'
         assert set(saved_data['race']['languages']) == {'Common', 'Draconic'}
         assert saved_data['race']['skills'] == ['Perception']
@@ -57,11 +61,23 @@ def test_character_info_output():
             'strength': 1,
             'dexterity': 1
         }
+        
+        # Verify classes
         assert len(saved_data['classes']) == 1
         fighter = saved_data['classes'][0]
         assert fighter['base_class']['name'] == 'Fighter'
         assert fighter['base_class']['level'] == 4
         assert fighter['subclass']['name'] == 'Echo Knight'
+        
+        # Verify feats
+        assert len(saved_data['feats']) == 2
+        assert any(feat['name'] == 'Sharpshooter' for feat in saved_data['feats'])
+        assert any(feat['name'] == 'Tavern Brawler' for feat in saved_data['feats'])
+        
+        # Verify inventory exists and has items
+        assert 'inventory' in saved_data
+        assert isinstance(saved_data['inventory'], list)
+        assert len(saved_data['inventory']) > 0
 
 def test_character_name_direct():
     """Test that character name is correctly parsed from JSON."""
@@ -170,8 +186,8 @@ def test_parse_output_structure(parser):
         'stats',
         'race',
         'classes',
-        'background',
         'feats',
+        'background',
         'inventory'
     }
     
@@ -392,9 +408,29 @@ def test_feats():
     assert not sharpshooter['is_homebrew']
     assert len(sharpshooter['description']) > 0
     assert any('long range' in line for line in sharpshooter['description'])
+    assert 'modifiers' in sharpshooter
     
     # Check Tavern Brawler feat
     tavern_brawler = next(feat for feat in feats if feat['name'] == 'Tavern Brawler')
     assert tavern_brawler['is_homebrew']
     assert len(tavern_brawler['description']) > 0
-    assert any('unarmed strike' in line for line in tavern_brawler['description']) 
+    assert any('unarmed strike' in line for line in tavern_brawler['description'])
+    
+    # Check Tavern Brawler modifiers
+    assert 'modifiers' in tavern_brawler
+    modifiers = tavern_brawler['modifiers']
+    assert len(modifiers) == 3
+    
+    # Check strength bonus modifier
+    strength_mod = next(m for m in modifiers if m['subtype'] == 'strength-score')
+    assert strength_mod['type'] == 'bonus'
+    assert strength_mod['value'] == 1
+    
+    # Check improvised weapons proficiency
+    weapon_mod = next(m for m in modifiers if m['subtype'] == 'improvised-weapons')
+    assert weapon_mod['type'] == 'proficiency'
+    
+    # Check unarmed strike damage
+    unarmed_mod = next(m for m in modifiers if m['subtype'] == 'unarmed-damage-die')
+    assert unarmed_mod['type'] == 'set'
+    assert unarmed_mod['dice'] == '1d4' 
