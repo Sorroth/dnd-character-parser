@@ -364,8 +364,9 @@ class CharacterParser:
         return inventory
     
     def get_feats(self):
-        """Extract character feats."""
+        """Extract character feats and their modifiers."""
         feats_data = self.data['data'].get('feats', [])
+        feat_modifiers = self.data['data']['modifiers'].get('feat', [])
         feats = []
         
         for feat in feats_data:
@@ -378,11 +379,35 @@ class CharacterParser:
             description = description.replace('<li>', '• ').replace('</li>', '\n')
             description = description.replace('\r\n', '\n').strip()
             
+            # Get modifiers for this feat
+            feat_id = definition['id']
+            modifiers = []
+            for mod in feat_modifiers:
+                if mod['componentId'] == feat_id:
+                    modifier = {
+                        "type": mod['type'],
+                        "subtype": mod['subType'],
+                        "friendly_name": mod['friendlySubtypeName']
+                    }
+                    
+                    # Add value if present
+                    if mod.get('value') is not None:
+                        modifier['value'] = mod['value']
+                    elif mod.get('fixedValue') is not None:
+                        modifier['value'] = mod['fixedValue']
+                    
+                    # Add dice if present
+                    if mod.get('dice') is not None:
+                        modifier['dice'] = mod['dice']['diceString']
+                    
+                    modifiers.append(modifier)
+            
             feat_info = {
                 "name": definition['name'],
                 "description": [line.strip() for line in description.split('\n') if line.strip()],
                 "prerequisites": definition.get('prerequisites', []),
-                "is_homebrew": definition.get('isHomebrew', False)
+                "is_homebrew": definition.get('isHomebrew', False),
+                "modifiers": modifiers
             }
             feats.append(feat_info)
         
