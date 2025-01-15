@@ -235,3 +235,39 @@ def test_class_features():
     action_surge = next(bonus for bonus in bonuses if bonus["name"] == "Action Surge")
     assert any("take one additional action" in line 
               for line in action_surge["description"]) 
+
+def test_subclass_features():
+    """Test that subclass features are correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    classes = parser.get_classes()
+    
+    fighter = classes[0]
+    assert fighter['subclass']['name'] == 'Echo Knight'
+    
+    # Check subclass bonuses exist
+    assert 'subclass_bonuses' in fighter['subclass']
+    subclass_bonuses = fighter['subclass']['subclass_bonuses']
+    
+    # Define excluded features
+    excluded_features = {
+        "Martial Archetype",
+        "Fighting Style",
+        "Second Wind",
+        "Action Surge",
+        "Ability Score Improvement",
+        "Proficiencies",
+        "Hit Points",
+        "Equipment"
+    }
+    
+    # Check that excluded features are not present
+    feature_names = [bonus["name"] for bonus in subclass_bonuses]
+    for excluded in excluded_features:
+        assert excluded not in feature_names
+    
+    # Check format of features
+    for bonus in subclass_bonuses:
+        assert "name" in bonus
+        assert "description" in bonus
+        assert isinstance(bonus["description"], list)
+        assert len(bonus["description"]) > 0 

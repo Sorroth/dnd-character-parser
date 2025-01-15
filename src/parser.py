@@ -137,6 +137,49 @@ class CharacterParser:
         
         return features
     
+    def get_subclass_features(self, class_info):
+        """Extract subclass features from class definition."""
+        features = []
+        
+        # Features to exclude
+        excluded_features = {
+            "Martial Archetype",
+            "Fighting Style",
+            "Second Wind",
+            "Action Surge",
+            "Ability Score Improvement",
+            "Proficiencies",
+            "Hit Points",
+            "Equipment"
+        }
+        
+        if not class_info.get('subclassDefinition'):
+            return features
+        
+        current_level = class_info['level']
+        subclass_features = class_info['subclassDefinition'].get('classFeatures', [])
+        
+        for feature in subclass_features:
+            if feature['requiredLevel'] <= current_level and feature['name'] not in excluded_features:
+                # Clean up the description by removing HTML tags
+                description = feature['description']
+                description = description.replace('<p>', '').replace('</p>', '')
+                description = description.replace('<br />', '\n')
+                description = description.replace('<ul>', '').replace('</ul>', '')
+                description = description.replace('<li>', '• ').replace('</li>', '')
+                description = description.replace('<strong>', '').replace('</strong>', '')
+                description = description.replace('<span class="Serif-Character-Style_Bold-Serif">', '').replace('</span>', '')
+                
+                # Split description into lines and remove empty ones
+                description_lines = [line.strip() for line in description.split('\n') if line.strip()]
+                
+                features.append({
+                    "name": feature['name'],
+                    "description": description_lines
+                })
+        
+        return features
+    
     def get_classes(self):
         """Extract character class information."""
         classes = []
@@ -161,6 +204,9 @@ class CharacterParser:
             # Add class features
             class_bonuses.extend(self.get_class_features(class_info))
 
+            # Get subclass features
+            subclass_bonuses = self.get_subclass_features(class_info)
+
             class_data = {
                 "base_class": {
                     "name": class_info['definition']['name'],
@@ -168,7 +214,8 @@ class CharacterParser:
                     "class_bonuses": class_bonuses
                 },
                 "subclass": {
-                    "name": class_info['subclassDefinition']['name']
+                    "name": class_info['subclassDefinition']['name'],
+                    "subclass_bonuses": subclass_bonuses
                 } if class_info.get('subclassDefinition') else None
             }
             classes.append(class_data)
