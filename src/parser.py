@@ -308,6 +308,61 @@ class CharacterParser:
             "weight": data['weight']
         }
     
+    def get_inventory(self):
+        """Extract character inventory information."""
+        inventory_data = self.data['data'].get('inventory', [])
+        
+        # Process inventory items
+        inventory = []
+        seen_items = set()  # Track items we've already added
+        
+        for item in inventory_data:
+            definition = item['definition']
+            name = definition['name']
+            
+            # Skip Donkey
+            if name == "Donkey (or Mule)":
+                continue
+            
+            # For Backpack, only add the first one
+            if name == "Backpack" and name in seen_items:
+                continue
+            
+            # Clean HTML tags from description
+            description = definition.get('description', '')
+            description = description.replace('<p>', '').replace('</p>', '')
+            description = description.replace('<br />', '\n')
+            
+            inventory_item = {
+                "name": name,
+                "quantity": item['quantity'],
+                "type": definition.get('type', ''),
+                "description": description,
+                "weight": definition.get('weight', 0),
+                "equipped": item.get('equipped', False),
+                "rarity": definition.get('rarity', 'Common'),
+                "magic": definition.get('magic', False)
+            }
+            
+            # Add cost if present
+            if definition.get('cost') is not None:
+                inventory_item['cost'] = {
+                    "quantity": definition['cost'],
+                    "unit": "gp"
+                }
+            
+            # Add container info if present
+            if definition.get('isContainer'):
+                inventory_item['container'] = {
+                    "capacity": definition.get('capacity', ''),
+                    "capacity_weight": definition.get('capacityWeight', 0)
+                }
+            
+            inventory.append(inventory_item)
+            seen_items.add(name)
+        
+        return inventory
+    
     def parse(self):
         """Parse character data into desired format."""
         return {
@@ -317,5 +372,6 @@ class CharacterParser:
             "stats": self.get_stats(),
             "race": self.get_race(),
             "classes": self.get_classes(),
-            "background": self.get_background()
+            "background": self.get_background(),
+            "inventory": self.get_inventory()
         } 

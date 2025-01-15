@@ -170,7 +170,8 @@ def test_parse_output_structure(parser):
         'stats',
         'race',
         'classes',
-        'background'
+        'background',
+        'inventory'
     }
     
     # Verify characteristics structure
@@ -343,3 +344,36 @@ def test_characteristics():
         "height": "6'0\"",
         "weight": 200
     } 
+
+def test_inventory():
+    """Test that inventory is correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    inventory = parser.get_inventory()
+    
+    assert isinstance(inventory, list)
+    
+    # Check for specific items if they exist
+    if inventory:
+        # Verify basic structure of each item
+        for item in inventory:
+            assert 'name' in item
+            assert 'quantity' in item
+            assert 'description' in item
+            assert 'weight' in item
+            assert 'cost' in item or item.get('magic', False)  # Magical items might not have cost
+            assert isinstance(item.get('cost', {}), dict)
+            if 'cost' in item:
+                assert 'quantity' in item['cost']
+                assert 'unit' in item['cost']
+        
+        # Verify Donkey is not in inventory
+        assert not any(item['name'] == "Donkey (or Mule)" for item in inventory)
+        
+        # Verify only one Backpack
+        backpacks = [item for item in inventory if item['name'] == "Backpack"]
+        assert len(backpacks) == 1
+        
+        # Verify Backpack has container info
+        backpack = backpacks[0]
+        assert 'container' in backpack
+        assert backpack['container']['capacity_weight'] == 30 
