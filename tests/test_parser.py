@@ -171,6 +171,7 @@ def test_parse_output_structure(parser):
         'race',
         'classes',
         'background',
+        'feats',
         'inventory'
     }
     
@@ -377,3 +378,23 @@ def test_inventory():
         backpack = backpacks[0]
         assert 'container' in backpack
         assert backpack['container']['capacity_weight'] == 30 
+
+def test_feats():
+    """Test that feats are correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    feats = parser.get_feats()
+    
+    assert isinstance(feats, list)
+    assert len(feats) == 2  # Sharpshooter and Tavern Brawler
+    
+    # Check Sharpshooter feat
+    sharpshooter = next(feat for feat in feats if feat['name'] == 'Sharpshooter')
+    assert not sharpshooter['is_homebrew']
+    assert len(sharpshooter['description']) > 0
+    assert any('long range' in line for line in sharpshooter['description'])
+    
+    # Check Tavern Brawler feat
+    tavern_brawler = next(feat for feat in feats if feat['name'] == 'Tavern Brawler')
+    assert tavern_brawler['is_homebrew']
+    assert len(tavern_brawler['description']) > 0
+    assert any('unarmed strike' in line for line in tavern_brawler['description']) 

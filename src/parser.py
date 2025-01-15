@@ -363,6 +363,31 @@ class CharacterParser:
         
         return inventory
     
+    def get_feats(self):
+        """Extract character feats."""
+        feats_data = self.data['data'].get('feats', [])
+        feats = []
+        
+        for feat in feats_data:
+            definition = feat['definition']
+            
+            # Clean HTML tags from description
+            description = definition.get('description', '')
+            description = description.replace('<p>', '').replace('</p>', '')
+            description = description.replace('<ul>', '').replace('</ul>', '')
+            description = description.replace('<li>', '• ').replace('</li>', '\n')
+            description = description.replace('\r\n', '\n').strip()
+            
+            feat_info = {
+                "name": definition['name'],
+                "description": [line.strip() for line in description.split('\n') if line.strip()],
+                "prerequisites": definition.get('prerequisites', []),
+                "is_homebrew": definition.get('isHomebrew', False)
+            }
+            feats.append(feat_info)
+        
+        return feats
+    
     def parse(self):
         """Parse character data into desired format."""
         return {
@@ -372,6 +397,7 @@ class CharacterParser:
             "stats": self.get_stats(),
             "race": self.get_race(),
             "classes": self.get_classes(),
+            "feats": self.get_feats(),
             "background": self.get_background(),
             "inventory": self.get_inventory()
         } 
