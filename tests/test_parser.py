@@ -271,3 +271,20 @@ def test_subclass_features():
         assert "description" in bonus
         assert isinstance(bonus["description"], list)
         assert len(bonus["description"]) > 0 
+
+def test_background():
+    """Test that background information is correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    background = parser.get_background()
+    
+    assert background['name'] == 'Urban Bounty Hunter'
+    
+    # Check feature
+    assert background['feature']['name'] == 'Ear to the Ground'
+    assert len(background['feature']['description']) == 1
+    assert "segment of society" in background['feature']['description'][0]
+    
+    # Verify equipment is not included
+    assert 'equipment' not in background
+    # Verify proficiencies are not included
+    assert 'proficiencies' not in background 
