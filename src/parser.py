@@ -229,6 +229,31 @@ class CharacterParser:
         with open(output_path, 'w', encoding='utf-8') as file:
             json.dump(output_data, file, indent=2) 
     
+    def get_background(self):
+        """Extract character background information."""
+        background_data = self.data['data'].get('background', {})
+        if not background_data or not background_data.get('definition'):
+            return None
+        
+        definition = background_data['definition']
+        
+        # Clean HTML tags from descriptions
+        def clean_text(text):
+            if not text:
+                return ""
+            text = text.replace('<p>', '').replace('</p>', '')
+            text = text.replace('<span class="No-Break">', '').replace('</span>', '')
+            text = text.replace('<br />', '\n')
+            return text.strip()
+        
+        return {
+            "name": definition['name'],
+            "feature": {
+                "name": definition['featureName'],
+                "description": [clean_text(definition['featureDescription'])]
+            }
+        }
+    
     def parse(self):
         """Parse character data into desired format."""
         return {
@@ -236,5 +261,6 @@ class CharacterParser:
             "character_name": self.get_name(),
             "stats": self.get_stats(),
             "racial_bonuses": self.get_race(),
-            "classes": self.get_classes()
+            "classes": self.get_classes(),
+            "background": self.get_background()
         } 
