@@ -91,12 +91,9 @@ class CharacterParser:
             if modifier['type'] == 'proficiency':
                 # Convert subType from 'light-armor' to 'Light Armor'
                 prof_name = modifier['subType'].replace('-', ' ').title()
-                proficiencies.append({
-                    "name": prof_name,
-                    "description": [f"Proficiency in {prof_name}"]
-                })
+                proficiencies.append(prof_name)
         
-        return proficiencies
+        return sorted(proficiencies)  # Sort for consistent output
     
     def get_class_features(self, class_info):
         """Extract class features from class definition."""
@@ -184,13 +181,18 @@ class CharacterParser:
         """Extract character class information."""
         classes = []
         for class_info in self.data['data']['classes']:
-            # Get fighting style from options
-            class_bonuses = []
+            # Get base class info
+            base_class = {
+                "name": class_info['definition']['name'],
+                "level": class_info['level'],
+                "proficiencies": self.get_class_proficiencies(),
+                "class_bonuses": []
+            }
             
             # Add fighting style bonuses
             for option in self.data['data']['options']['class']:
                 if option['componentId'] == 191:  # 191 is the Fighting Style component ID
-                    class_bonuses.append({
+                    base_class["class_bonuses"].append({
                         "name": option['definition']['name'],
                         "description": [
                             "Allows drawing thrown weapons as part of the attack",
@@ -198,27 +200,26 @@ class CharacterParser:
                         ]
                     })
             
-            # Add proficiency bonuses
-            class_bonuses.extend(self.get_class_proficiencies())
+            # Add class features (excluding proficiencies)
+            class_features = self.get_class_features(class_info)
+            for feature in class_features:
+                # Skip proficiency features since they're handled separately
+                if not feature['name'].startswith('Proficiency'):
+                    base_class["class_bonuses"].append(feature)
             
-            # Add class features
-            class_bonuses.extend(self.get_class_features(class_info))
-
-            # Get subclass features
-            subclass_bonuses = self.get_subclass_features(class_info)
-
-            class_data = {
-                "base_class": {
-                    "name": class_info['definition']['name'],
-                    "level": class_info['level'],
-                    "class_bonuses": class_bonuses
-                },
-                "subclass": {
+            # Get subclass info if it exists
+            subclass = None
+            if class_info.get('subclassDefinition'):
+                subclass = {
                     "name": class_info['subclassDefinition']['name'],
-                    "subclass_bonuses": subclass_bonuses
-                } if class_info.get('subclassDefinition') else None
-            }
-            classes.append(class_data)
+                    "subclass_bonuses": self.get_subclass_features(class_info)
+                }
+            
+            classes.append({
+                "base_class": base_class,
+                "subclass": subclass
+            })
+        
         return classes
     
     def save_output(self, output_data, filename):
