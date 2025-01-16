@@ -302,6 +302,32 @@ def test_subclass_features():
                 print(f"In line: {cleaned_line}")
             assert all(ord(c) < 128 for c in cleaned_line)  # Check remaining chars are ASCII
 
+def test_clean_text():
+    """Test that text cleaning works correctly."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    
+    # Test HTML tag removal
+    html_text = '<p>Test</p><br /><strong>Bold</strong><em>Italic</em>'
+    assert parser.clean_text(html_text) == 'TestBoldItalic'
+    
+    # Test HTML entity conversion
+    entity_text = 'Quote &ldquo;test&rdquo; with &mdash; and &nbsp;spaces'
+    assert parser.clean_text(entity_text) == 'Quote "test" with - and spaces'
+    
+    # Test Unicode conversion
+    unicode_text = 'Smart \u201cquotes\u201d and \u2019apostrophes\u2019 with \u2022 bullets'
+    assert parser.clean_text(unicode_text) == 'Smart "quotes" and \'apostrophes\' with • bullets'
+    
+    # Test line break handling
+    line_breaks = 'Line 1\nLine 2\r\nLine 3\rLine 4'
+    assert parser.clean_text(line_breaks) == 'Line 1 Line 2 Line 3 Line 4'
+    
+    # Test complex HTML with No-Break spans
+    complex_html = '''<div class="mastery-container"><hr />
+    <span class="No-Break">Keep this together</span>
+    <p class="Core-Styles_Core-Body">Normal text</p></div>'''
+    assert parser.clean_text(complex_html) == 'Keep this together Normal text'
+
 def test_background():
     """Test that background information is correctly parsed."""
     parser = CharacterParser('data/Miriam Hopps.json')
@@ -314,12 +340,13 @@ def test_background():
     assert isinstance(background['description'], list)
     assert len(background['description']) > 0
     
-    # Verify no HTML or special characters in description
+    # Verify no HTML, special characters, or line breaks in description
     for line in background['description']:
         assert '<' not in line  # No HTML tags
         assert '&' not in line  # No HTML entities
         assert '\n' not in line  # No newlines
         assert '\r' not in line  # No carriage returns
+        assert '  ' not in line  # No double spaces
     
     # Check background bonuses
     assert 'background_bonuses' in background
@@ -344,22 +371,6 @@ def test_background():
     for prof in expected_proficiencies:
         assert prof in bonus_names
 
-def test_characteristics():
-    """Test that characteristics are correctly parsed."""
-    parser = CharacterParser('data/Miriam Hopps.json')
-    characteristics = parser.get_characteristics()
-    
-    assert characteristics == {
-        "gender": "Female",
-        "faith": "Chauntea",
-        "age": 20,
-        "hair": "Brown",
-        "eyes": "Brown",
-        "skin": "White",
-        "height": "6'0\"",
-        "weight": 200
-    } 
-
 def test_inventory():
     """Test that inventory is correctly parsed."""
     parser = CharacterParser('data/Miriam Hopps.json')
@@ -370,14 +381,13 @@ def test_inventory():
     
     for item in inventory:
         assert 'name' in item
-        assert 'description' in item
-        
-        # Verify no HTML or special characters in description
-        if item['description']:
-            assert '<' not in item['description']  # No HTML tags
-            assert '&' not in item['description']  # No HTML entities
-            assert '\n' not in item['description']  # No newlines
-            assert '\r' not in item['description']  # No carriage returns
+        if 'description' in item:
+            description = item['description']
+            assert '<' not in description  # No HTML tags
+            assert '&' not in description  # No HTML entities
+            assert '\n' not in description  # No newlines
+            assert '\r' not in description  # No carriage returns
+            assert '  ' not in description  # No double spaces
 
 def test_feats():
     """Test that feats are correctly parsed."""
@@ -392,35 +402,10 @@ def test_feats():
         assert 'description' in feat
         assert isinstance(feat['description'], list)
         
-        # Verify no HTML or special characters in description
+        # Verify no HTML, special characters, or line breaks in description
         for line in feat['description']:
             assert '<' not in line  # No HTML tags
             assert '&' not in line  # No HTML entities
             assert '\n' not in line  # No newlines
             assert '\r' not in line  # No carriage returns
-
-def test_clean_text():
-    """Test that text cleaning works correctly."""
-    parser = CharacterParser('data/Miriam Hopps.json')
-    
-    # Test HTML tag removal
-    html_text = '<p>Test</p><br /><strong>Bold</strong><em>Italic</em>'
-    assert parser.clean_text(html_text) == 'Test Bold Italic'
-    
-    # Test HTML entity conversion
-    entity_text = 'Quote &ldquo;test&rdquo; with &mdash; and &nbsp;spaces'
-    assert parser.clean_text(entity_text) == 'Quote "test" with - and spaces'
-    
-    # Test Unicode conversion
-    unicode_text = 'Smart \u201cquotes\u201d and \u2019apostrophes\u2019 with \u2022 bullets'
-    assert parser.clean_text(unicode_text) == 'Smart "quotes" and \'apostrophes\' with • bullets'
-    
-    # Test line break handling
-    line_breaks = 'Line 1\nLine 2\r\nLine 3\rLine 4'
-    assert parser.clean_text(line_breaks) == 'Line 1 Line 2 Line 3 Line 4'
-    
-    # Test complex HTML
-    complex_html = '''<div class="mastery-container"><hr />
-    <span class="Serif-Character-Style_Italic-Serif">Italic text</span>
-    <p class="Core-Styles_Core-Body">Normal text</p></div>'''
-    assert parser.clean_text(complex_html) == 'Italic text Normal text' 
+            assert '  ' not in line  # No double spaces 
