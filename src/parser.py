@@ -229,19 +229,13 @@ class CharacterParser:
         for unicode_char, replacement in unicode_map.items():
             text = text.replace(unicode_char, replacement)
         
-        # Handle line breaks - preserve paragraph breaks
-        text = text.replace('\r\n', '\n').replace('\r', '\n')
-        paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
+        # Handle all types of line breaks and normalize spaces
+        text = text.replace('\r\n', ' ')
+        text = text.replace('\n', ' ')
+        text = text.replace('\r', ' ')
         
-        # Clean up spaces in each paragraph
-        paragraphs = [' '.join(p.split()) for p in paragraphs]
-        
-        # If there's only one paragraph, return it directly
-        if len(paragraphs) == 1:
-            return paragraphs[0]
-        
-        # Otherwise, return all paragraphs joined with newlines
-        return '\n'.join(paragraphs)
+        # Clean up spaces
+        return ' '.join(text.split())
     
     def get_subclass_features(self, class_info):
         """Extract subclass features from class definition."""
