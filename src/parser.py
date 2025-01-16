@@ -185,9 +185,9 @@ class CharacterParser:
             base_class = {
                 "name": class_info['definition']['name'],
                 "level": class_info['level'],
-                "proficiencies": self.get_class_proficiencies(),
                 "class_bonuses": {
-                    "features": []  # Group features in their own array
+                    "proficiencies": self.get_class_proficiencies(),
+                    "features": []
                 }
             }
             
