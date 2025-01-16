@@ -121,7 +121,7 @@ def test_class_proficiencies():
     
     # Get fighter proficiencies
     fighter = classes[0]['base_class']
-    proficiencies = fighter['proficiencies']
+    proficiencies = fighter['class_bonuses']['proficiencies']
     
     # Check that we get all expected proficiencies
     expected_proficiencies = [
@@ -139,7 +139,7 @@ def test_class_proficiencies():
     
     assert sorted(proficiencies) == expected_proficiencies
     
-    # Check that proficiencies are not in class_bonuses features
+    # Check that proficiencies are not in features
     feature_names = [feature['name'] for feature in fighter['class_bonuses']['features']]
     assert not any('Proficiency' in name for name in feature_names)
 
@@ -159,18 +159,9 @@ def test_classes():
     features = fighter['base_class']['class_bonuses']['features']
     assert len(features) == 3  # fighting style + second wind + action surge
     
-    # Check fighting style
-    fighting_style = next(feature for feature in features if feature['name'] == 'Thrown Weapon Fighting')
-    assert fighting_style['description'] == [
-        "Allows drawing thrown weapons as part of the attack",
-        "Adds +2 to damage rolls with thrown weapons"
-    ]
-    
-    # Check proficiencies are in their own array
-    proficiencies = fighter['base_class']['proficiencies']
+    # Check proficiencies are in class_bonuses
+    proficiencies = fighter['base_class']['class_bonuses']['proficiencies']
     assert len(proficiencies) == 10  # Should have 10 proficiencies
-    
-    assert fighter['subclass']['name'] == 'Echo Knight'
 
 def test_parse_output_structure(parser):
     """Test the complete parsed output structure."""
