@@ -189,8 +189,11 @@ class CharacterParser:
             '<strong>', '</strong>', '<em>', '</em>', 
             '<span class="Serif-Character-Style_Bold-Serif">', '</span>',
             '<span class="No-Break">', '</span>',
+            '<span class="Serif-Character-Style_Italic-Serif">', '</span>',
             '<p class="Core-Styles_Core-Body">', 
-            '<p class="Core-Styles_Core-Body--Extra-Space-After-">'
+            '<p class="Core-Styles_Core-Body--Extra-Space-After-">',
+            '<div class="mastery-container">', '</div>',
+            '<hr />'
         ]
         for tag in html_tags:
             text = text.replace(tag, '')
@@ -225,8 +228,13 @@ class CharacterParser:
             text = text.replace(unicode_char, replacement)
         
         # Handle line breaks
-        text = text.replace('\r\n', '\n')  # Convert Windows line endings
-        text = text.replace('\r', '\n')    # Convert old Mac line endings
+        text = text.replace('\r\n', ' ')  # Convert Windows line endings to space
+        text = text.replace('\r', ' ')    # Convert old Mac line endings to space
+        text = text.replace('\n', ' ')    # Convert Unix line endings to space
+        
+        # Clean up extra spaces
+        while '  ' in text:
+            text = text.replace('  ', ' ')
         
         return text.strip()
     
