@@ -372,12 +372,12 @@ class CharacterParser:
         
         # Add personality traits
         if traits_data.get('personalityTraits'):
-            traits.extend([t.strip() for t in traits_data['personalityTraits'].split('\n') if t.strip()])
+            traits.extend([self._clean_text(t.strip()) for t in traits_data['personalityTraits'].split('\n') if t.strip()])
         
         # Add ideals, bonds, and flaws
         for trait_type in ['ideals', 'bonds', 'flaws']:
             if traits_data.get(trait_type):
-                traits.append(traits_data[trait_type].strip())
+                traits.append(self._clean_text(traits_data[trait_type].strip()))
         
         # Process appearance for additional traits
         additional_traits = []
