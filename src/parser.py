@@ -183,20 +183,32 @@ class CharacterParser:
         if not text:
             return ""
         
-        # Remove all HTML tags
+        # Remove all HTML tags but preserve spaces
         html_tags = [
-            '<p>', '</p>', '<br />', '<ul>', '</ul>', '<li>', '</li>',
-            '<strong>', '</strong>', '<em>', '</em>', 
-            '<span class="Serif-Character-Style_Bold-Serif">', '</span>',
-            '<span class="No-Break">', '</span>',
-            '<span class="Serif-Character-Style_Italic-Serif">', '</span>',
-            '<p class="Core-Styles_Core-Body">', 
-            '<p class="Core-Styles_Core-Body--Extra-Space-After-">',
-            '<div class="mastery-container">', '</div>',
-            '<hr />'
+            ('<p>', ' '),  # Replace tags with space to preserve word separation
+            ('</p>', ' '),
+            ('<br />', ' '),
+            ('<ul>', ' '),
+            ('</ul>', ' '),
+            ('<li>', ' '),
+            ('</li>', ' '),
+            ('<strong>', ' '),
+            ('</strong>', ' '),
+            ('<em>', ' '),
+            ('</em>', ' '),
+            ('<span class="Serif-Character-Style_Bold-Serif">', ' '),
+            ('</span>', ' '),
+            ('<span class="No-Break">', ' '),
+            ('<span class="Serif-Character-Style_Italic-Serif">', ' '),
+            ('<p class="Core-Styles_Core-Body">', ' '),
+            ('<p class="Core-Styles_Core-Body--Extra-Space-After-">', ' '),
+            ('<div class="mastery-container">', ' '),
+            ('</div>', ' '),
+            ('<hr />', ' ')
         ]
-        for tag in html_tags:
-            text = text.replace(tag, '')
+        
+        for tag, replacement in html_tags:
+            text = text.replace(tag, replacement)
         
         # Convert HTML entities
         html_entities = {
