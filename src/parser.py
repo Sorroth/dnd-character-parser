@@ -183,32 +183,22 @@ class CharacterParser:
         if not text:
             return ""
         
-        # Remove all HTML tags but preserve spaces
-        html_tags = [
-            ('<p>', ' '),  # Replace tags with space to preserve word separation
-            ('</p>', ' '),
-            ('<br />', ' '),
-            ('<ul>', ' '),
-            ('</ul>', ' '),
-            ('<li>', ' '),
-            ('</li>', ' '),
-            ('<strong>', ' '),
-            ('</strong>', ' '),
-            ('<em>', ' '),
-            ('</em>', ' '),
-            ('<span class="Serif-Character-Style_Bold-Serif">', ' '),
-            ('</span>', ' '),
-            ('<span class="No-Break">', ' '),
-            ('<span class="Serif-Character-Style_Italic-Serif">', ' '),
-            ('<p class="Core-Styles_Core-Body">', ' '),
-            ('<p class="Core-Styles_Core-Body--Extra-Space-After-">', ' '),
-            ('<div class="mastery-container">', ' '),
-            ('</div>', ' '),
-            ('<hr />', ' ')
-        ]
+        # First handle No-Break spans - remove the tags but keep content together
+        text = text.replace('<span class="No-Break">', '').replace('</span>', '')
         
-        for tag, replacement in html_tags:
-            text = text.replace(tag, replacement)
+        # Remove all other HTML tags
+        html_tags = [
+            '<p>', '</p>', '<br />', '<ul>', '</ul>', '<li>', '</li>',
+            '<strong>', '</strong>', '<em>', '</em>', 
+            '<span class="Serif-Character-Style_Bold-Serif">', 
+            '<span class="Serif-Character-Style_Italic-Serif">', 
+            '<p class="Core-Styles_Core-Body">', 
+            '<p class="Core-Styles_Core-Body--Extra-Space-After-">',
+            '<div class="mastery-container">', '</div>',
+            '<hr />'
+        ]
+        for tag in html_tags:
+            text = text.replace(tag, '')
         
         # Convert HTML entities
         html_entities = {
@@ -239,16 +229,19 @@ class CharacterParser:
         for unicode_char, replacement in unicode_map.items():
             text = text.replace(unicode_char, replacement)
         
-        # Handle line breaks
-        text = text.replace('\r\n', ' ')  # Convert Windows line endings to space
-        text = text.replace('\r', ' ')    # Convert old Mac line endings to space
-        text = text.replace('\n', ' ')    # Convert Unix line endings to space
+        # Handle line breaks - preserve paragraph breaks
+        text = text.replace('\r\n', '\n').replace('\r', '\n')
+        paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
         
-        # Clean up extra spaces
-        while '  ' in text:
-            text = text.replace('  ', ' ')
+        # Clean up spaces in each paragraph
+        paragraphs = [' '.join(p.split()) for p in paragraphs]
         
-        return text.strip()
+        # If there's only one paragraph, return it directly
+        if len(paragraphs) == 1:
+            return paragraphs[0]
+        
+        # Otherwise, return all paragraphs joined with newlines
+        return '\n'.join(paragraphs)
     
     def get_subclass_features(self, class_info):
         """Extract subclass features from class definition."""
