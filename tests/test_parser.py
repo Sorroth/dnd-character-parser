@@ -36,6 +36,7 @@ def test_character_info_output():
             'classes',
             'feats',
             'background',
+            'spells',
             'inventory'
         }
         
@@ -177,6 +178,7 @@ def test_parse_output_structure(parser):
         'classes',
         'feats',
         'background',
+        'spells',
         'inventory'
     }
     
@@ -468,3 +470,44 @@ def test_get_feats():
     assert other is not None
     assert any('unarmed-damage-die' in o for o in other['other'])
     assert any('1d4' in str(o.values()) for o in other['other']) 
+
+def test_spells():
+    """Test that spells are correctly parsed."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    spells = parser.get_spells()
+    
+    assert isinstance(spells, list)
+    assert len(spells) == 1  # Only Gust of Wind from Wind Fan
+    
+    spell = spells[0]
+    # Test basic spell info
+    assert spell['name'] == 'Gust of Wind'
+    assert spell['level'] == 2
+    assert spell['school'] == 'Evocation'
+    assert spell['casting_time'] == '1 action'
+    assert spell['range'] == 'Self'
+    assert spell['duration'] == 'Concentration, up to 1 minute'
+    assert spell['concentration'] is True
+    
+    # Test components
+    components = spell['components']
+    assert components['verbal'] is True
+    assert components['somatic'] is True
+    assert components['material'] is True
+    assert components['materials_needed'] == 'a legume seed'
+    
+    # Test source item
+    assert 'source_item' in spell
+    assert spell['source_item'] == 'Wind Fan'
+    
+    # Test description
+    assert isinstance(spell['description'], list)
+    assert len(spell['description']) == 1
+    assert "A line of strong wind" in spell['description'][0]
+    
+    # Test text cleaning
+    description = spell['description'][0]
+    assert '<' not in description  # No HTML tags
+    assert '&' not in description  # No HTML entities
+    assert '\u2019' not in description  # No right single quotation mark
+    assert '\u00a0' not in description  # No non-breaking space 
