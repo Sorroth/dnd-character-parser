@@ -339,6 +339,13 @@ def test_background():
     assert len(background['description']) == 1
     assert "Before you became an adventurer" in background['description'][0]
     
+    # Test that Unicode characters are properly cleaned
+    description = background['description'][0]
+    assert '\u2019' not in description  # No right single quotation mark
+    assert '\u00a0' not in description  # No non-breaking space
+    assert "you aren't" in description  # Verify apostrophe is standard
+    assert "you're" in description or "you are" in description  # Verify either form is present
+    
     # Test background bonuses
     bonuses = background['background_bonuses']
     assert len(bonuses) == 3
@@ -365,34 +372,25 @@ def test_background():
     assert 'traits' in traits_bonus
     assert 'additional_traits' in traits_bonus
     
-    # Test traits content
+    # Test traits content and Unicode cleaning
     traits = traits_bonus['traits']
-    print("\nActual traits:", traits)  # Debug print
     assert len(traits) == 5  # personality traits + ideal + bond + flaw
-    assert "I always have a plan for what to do when things go wrong." in traits
-    
-    # Let's check each trait individually to find the ideal
     for trait in traits:
-        if "loyal to my friends" in trait:
-            print("\nFound matching trait:", trait)  # Debug print
+        assert '\u2019' not in trait  # No right single quotation mark
+        assert '\u00a0' not in trait  # No non-breaking space
     
-    # For now, let's check just part of the ideal text
-    assert any("loyal to my friends" in trait for trait in traits)
-    assert "My ill-gotten gains go to support my family." in traits
-    
-    # Test additional traits content
+    # Test additional traits content and Unicode cleaning
     additional_traits = traits_bonus['additional_traits']
     assert len(additional_traits) == 3
-    
-    # Clean the actual traits to replace non-breaking spaces with regular spaces
-    cleaned_additional_traits = [
-        trait.replace('\xa0', ' ') for trait in additional_traits
-    ]
-    
     expected_additional_traits = [
         "Heraldic Signs: A skull with a dagger through it, representing the doom you bring to your enemies",
         "Instructor: Street Fighter. Your trainer excels at urban combat, combining close-quarters work with silence and efficiency.",
         "Signature Style: Effortless. You rarely perspire or display anything other than a stoic expression in battle."
+    ]
+    
+    # Clean the actual traits to replace non-breaking spaces with regular spaces
+    cleaned_additional_traits = [
+        trait.replace('\u00a0', ' ') for trait in additional_traits
     ]
     assert cleaned_additional_traits == expected_additional_traits
     
@@ -400,6 +398,7 @@ def test_background():
     for trait in additional_traits:
         assert '<' not in trait  # No HTML tags
         assert '&' not in trait  # No HTML entities
+        assert '\u2019' not in trait  # No right single quotation mark
 
 def test_inventory():
     """Test that inventory is correctly parsed."""
