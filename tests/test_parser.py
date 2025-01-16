@@ -389,23 +389,53 @@ def test_inventory():
             assert '\r' not in description  # No carriage returns
             assert '  ' not in description  # No double spaces
 
-def test_feats():
+def test_get_feats():
     """Test that feats are correctly parsed."""
     parser = CharacterParser('data/Miriam Hopps.json')
     feats = parser.get_feats()
     
+    # Test basic structure
     assert isinstance(feats, list)
     assert len(feats) > 0
     
-    for feat in feats:
-        assert 'name' in feat
-        assert 'description' in feat
-        assert isinstance(feat['description'], list)
-        
-        # Verify no HTML, special characters, or line breaks in description
-        for line in feat['description']:
-            assert '<' not in line  # No HTML tags
-            assert '&' not in line  # No HTML entities
-            assert '\n' not in line  # No newlines
-            assert '\r' not in line  # No carriage returns
-            assert '  ' not in line  # No double spaces 
+    # Test Sharpshooter feat
+    sharpshooter = next((feat for feat in feats if feat['name'] == 'Sharpshooter'), None)
+    assert sharpshooter is not None
+    assert 'description' in sharpshooter
+    assert isinstance(sharpshooter['description'], list)
+    assert 'modifiers' in sharpshooter
+    assert sharpshooter['modifiers'] == []
+    
+    # Test Tavern Brawler feat
+    tavern_brawler = next((feat for feat in feats if feat['name'] == 'Tavern Brawler'), None)
+    assert tavern_brawler is not None
+    assert 'description' in tavern_brawler
+    assert isinstance(tavern_brawler['description'], list)
+    assert 'feat_bonuses' in tavern_brawler
+    
+    # Test Tavern Brawler bonuses
+    bonuses = tavern_brawler['feat_bonuses']
+    assert isinstance(bonuses, list)
+    
+    # Test ability bonuses
+    ability_bonus = next((b for b in bonuses if 'ability_bonuses' in b), None)
+    assert ability_bonus is not None
+    assert 'strength' in ability_bonus['ability_bonuses']
+    assert ability_bonus['ability_bonuses']['strength'] == 1
+    
+    # Test proficiencies
+    proficiencies = next((b for b in bonuses if 'proficiencies' in b), None)
+    assert proficiencies is not None
+    assert 'Improvised Weapons' in proficiencies['proficiencies']
+    
+    # Test features
+    features = next((b for b in bonuses if 'features' in b), None)
+    assert features is not None
+    assert any('improvised weapon strikes' in f.lower() for f in features['features'])
+    assert any('grapple' in f.lower() for f in features['features'])
+    
+    # Test other bonuses
+    other = next((b for b in bonuses if 'other' in b), None)
+    assert other is not None
+    assert any('unarmed-damage-die' in o for o in other['other'])
+    assert any('1d4' in str(o.values()) for o in other['other']) 

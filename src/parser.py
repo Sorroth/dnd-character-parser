@@ -457,16 +457,79 @@ class CharacterParser:
         """Extract character feats."""
         feats = []
         
+        # First, get all feat modifiers and actions indexed by definition ID
+        feat_modifiers = {}
+        feat_actions = {}
+        
+        # Get modifiers
+        if 'data' in self.data and 'modifiers' in self.data['data'] and 'feat' in self.data['data']['modifiers']:
+            for modifier in self.data['data']['modifiers']['feat']:
+                component_id = modifier['componentId']
+                if component_id not in feat_modifiers:
+                    feat_modifiers[component_id] = {
+                        'ability_bonuses': {},
+                        'proficiencies': [],
+                        'features': [],
+                        'other': []
+                    }
+                
+                # Sort modifier into appropriate category
+                if modifier['type'] == 'bonus' and 'score' in modifier['subType']:
+                    ability = modifier['subType'].replace('-score', '')
+                    feat_modifiers[component_id]['ability_bonuses'][ability] = modifier['value']
+                elif modifier['type'] == 'proficiency':
+                    prof_name = modifier['friendlySubtypeName']
+                    feat_modifiers[component_id]['proficiencies'].append(prof_name)
+                elif modifier['type'] == 'set' and modifier['subType'] == 'unarmed-damage-die':
+                    feat_modifiers[component_id]['other'].append({
+                        'unarmed-damage-die': modifier['dice']['diceString']
+                    })
+        
+        # Get actions
+        if 'data' in self.data and 'actions' in self.data['data'] and 'feat' in self.data['data']['actions']:
+            for action in self.data['data']['actions']['feat']:
+                component_id = action['componentId']
+                if component_id not in feat_modifiers:
+                    feat_modifiers[component_id] = {
+                        'ability_bonuses': {},
+                        'proficiencies': [],
+                        'features': [],
+                        'other': []
+                    }
+                if action['snippet']:
+                    feat_modifiers[component_id]['features'].append(action['snippet'].strip())
+        
+        # Process feats
         if 'data' in self.data and 'feats' in self.data['data']:
             for feat_data in self.data['data']['feats']:
-                if 'definition' in feat_data:
-                    feat = feat_data['definition']
-                    feat_info = {
-                        'name': feat['name'],
-                        'description': [self.clean_text(feat['description'])],
-                        'modifiers': []  # We'll keep modifiers for now
-                    }
-                    feats.append(feat_info)
+                feat = feat_data['definition']
+                feat_info = {
+                    'name': feat['name'],
+                    'description': [self.clean_text(feat['description'])]
+                }
+                
+                # Add modifiers if they exist
+                component_id = feat['id']
+                if component_id in feat_modifiers:
+                    mods = feat_modifiers[component_id]
+                    # Only add non-empty modifier categories
+                    feat_bonuses = []
+                    if mods['ability_bonuses']:
+                        feat_bonuses.append({'ability_bonuses': mods['ability_bonuses']})
+                    if mods['proficiencies']:
+                        feat_bonuses.append({'proficiencies': mods['proficiencies']})
+                    if mods['features']:
+                        feat_bonuses.append({'features': mods['features']})
+                    if mods['other']:
+                        feat_bonuses.append({'other': mods['other']})
+                    if feat_bonuses:
+                        feat_info['feat_bonuses'] = feat_bonuses
+                    else:
+                        feat_info['modifiers'] = []
+                else:
+                    feat_info['modifiers'] = []
+                
+                feats.append(feat_info)
         
         return feats
     
