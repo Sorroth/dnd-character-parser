@@ -195,6 +195,17 @@ class CharacterParser:
         for tag in html_tags:
             text = text.replace(tag, '')
         
+        # Convert HTML entities
+        html_entities = {
+            '&ldquo;': '"',   # Left double quote
+            '&rdquo;': '"',   # Right double quote
+            '&ucirc;': 'u',   # û
+            '&mdash;': '-',   # Em dash
+            '&nbsp;': ' ',    # Non-breaking space
+        }
+        for entity, replacement in html_entities.items():
+            text = text.replace(entity, replacement)
+        
         # Convert Unicode to symbols
         unicode_map = {
             '\u2019': "'",  # Right single quotation mark
@@ -212,6 +223,10 @@ class CharacterParser:
         }
         for unicode_char, replacement in unicode_map.items():
             text = text.replace(unicode_char, replacement)
+        
+        # Handle line breaks
+        text = text.replace('\r\n', '\n')  # Convert Windows line endings
+        text = text.replace('\r', '\n')    # Convert old Mac line endings
         
         return text.strip()
     
