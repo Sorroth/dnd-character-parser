@@ -186,13 +186,15 @@ class CharacterParser:
                 "name": class_info['definition']['name'],
                 "level": class_info['level'],
                 "proficiencies": self.get_class_proficiencies(),
-                "class_bonuses": []
+                "class_bonuses": {
+                    "features": []  # Group features in their own array
+                }
             }
             
             # Add fighting style bonuses
             for option in self.data['data']['options']['class']:
                 if option['componentId'] == 191:  # 191 is the Fighting Style component ID
-                    base_class["class_bonuses"].append({
+                    base_class["class_bonuses"]["features"].append({
                         "name": option['definition']['name'],
                         "description": [
                             "Allows drawing thrown weapons as part of the attack",
@@ -205,7 +207,7 @@ class CharacterParser:
             for feature in class_features:
                 # Skip proficiency features since they're handled separately
                 if not feature['name'].startswith('Proficiency'):
-                    base_class["class_bonuses"].append(feature)
+                    base_class["class_bonuses"]["features"].append(feature)
             
             # Get subclass info if it exists
             subclass = None

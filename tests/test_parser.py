@@ -139,9 +139,9 @@ def test_class_proficiencies():
     
     assert sorted(proficiencies) == expected_proficiencies
     
-    # Check that proficiencies are not in class_bonuses
-    bonus_names = [bonus['name'] for bonus in fighter['class_bonuses']]
-    assert not any('Proficiency' in name for name in bonus_names)
+    # Check that proficiencies are not in class_bonuses features
+    feature_names = [feature['name'] for feature in fighter['class_bonuses']['features']]
+    assert not any('Proficiency' in name for name in feature_names)
 
 def test_classes():
     """Test that classes are correctly parsed from JSON."""
@@ -155,14 +155,12 @@ def test_classes():
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
     
-    # Test class bonuses (now without proficiencies)
-    bonuses = fighter['base_class']['class_bonuses']
-    
-    # Should have 3 bonuses (fighting style + second wind + action surge)
-    assert len(bonuses) == 3
+    # Test class features
+    features = fighter['base_class']['class_bonuses']['features']
+    assert len(features) == 3  # fighting style + second wind + action surge
     
     # Check fighting style
-    fighting_style = next(bonus for bonus in bonuses if bonus['name'] == 'Thrown Weapon Fighting')
+    fighting_style = next(feature for feature in features if feature['name'] == 'Thrown Weapon Fighting')
     assert fighting_style['description'] == [
         "Allows drawing thrown weapons as part of the attack",
         "Adds +2 to damage rolls with thrown weapons"
@@ -213,16 +211,12 @@ def test_parse_output_structure(parser):
     assert fighter['base_class']['name'] == 'Fighter'
     assert fighter['base_class']['level'] == 4
     
-    # Check class bonuses (now without proficiencies)
-    bonuses = fighter['base_class']['class_bonuses']
-    assert len(bonuses) == 3  # fighting style + second wind + action surge
-    
-    # Check proficiencies are in their own array
-    proficiencies = fighter['base_class']['proficiencies']
-    assert len(proficiencies) == 10
+    # Check class features
+    features = fighter['base_class']['class_bonuses']['features']
+    assert len(features) == 3  # fighting style + second wind + action surge
     
     # Check fighting style is present
-    fighting_style = next(bonus for bonus in bonuses if bonus['name'] == 'Thrown Weapon Fighting')
+    fighting_style = next(feature for feature in features if feature['name'] == 'Thrown Weapon Fighting')
     assert fighting_style['description'] == [
         "Allows drawing thrown weapons as part of the attack",
         "Adds +2 to damage rolls with thrown weapons"
@@ -236,7 +230,7 @@ def test_class_features():
     classes = parser.get_classes()
     
     fighter = classes[0]
-    bonuses = fighter['base_class']['class_bonuses']
+    features = fighter['base_class']['class_bonuses']['features']
     
     # Check for specific class features
     expected_features = [
@@ -253,7 +247,7 @@ def test_class_features():
         "Proficiencies"
     ]
     
-    feature_names = [bonus["name"] for bonus in bonuses]
+    feature_names = [feature["name"] for feature in features]
     
     # Check that expected features are present
     for feature in expected_features:
@@ -264,13 +258,13 @@ def test_class_features():
         assert feature not in feature_names
     
     # Check specific feature details
-    second_wind = next(bonus for bonus in bonuses if bonus["name"] == "Second Wind")
+    second_wind = next(feature for feature in features if feature["name"] == "Second Wind")
     assert any("regain hit points equal to 1d10 + your fighter level" in line 
               for line in second_wind["description"])
     
-    action_surge = next(bonus for bonus in bonuses if bonus["name"] == "Action Surge")
+    action_surge = next(feature for feature in features if feature["name"] == "Action Surge")
     assert any("take one additional action" in line 
-              for line in action_surge["description"]) 
+              for line in action_surge["description"])
 
 def test_subclass_features():
     """Test that subclass features are correctly parsed."""
