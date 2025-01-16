@@ -204,6 +204,11 @@ class CharacterParser:
             '\u2014': '-',  # Em dash
             '\u2013': '-',  # En dash
             '\u2022': '•',  # Bullet point
+            '\u2026': '...',  # Ellipsis
+            '\u00A0': ' ',  # Non-breaking space
+            '\u00E9': 'e',  # é
+            '\u00FB': 'u',  # û
+            '\u2212': '-',  # Minus sign
         }
         for unicode_char, replacement in unicode_map.items():
             text = text.replace(unicode_char, replacement)
@@ -339,14 +344,14 @@ class CharacterParser:
         definition = background_data['definition']
         
         # Split the description into paragraphs and clean each one
-        description = self._clean_text(definition['shortDescription']).split('\n')
+        description = self.clean_text(definition['shortDescription']).split('\n')
         description = [para for para in description if para.strip()]
         
         # Start with the Ear to the Ground feature
         background_bonuses = [
             {
                 "name": definition['featureName'],
-                "description": [self._clean_text(definition['featureDescription'])]
+                "description": [self.clean_text(definition['featureDescription'])]
             }
         ]
         
@@ -394,7 +399,7 @@ class CharacterParser:
                 continue
             
             # Clean HTML tags from description
-            description = self._clean_text(definition.get('description', ''))
+            description = self.clean_text(definition.get('description', ''))
             
             inventory_item = {
                 "name": name,
@@ -434,7 +439,7 @@ class CharacterParser:
         
         for feat in feats_data:
             definition = feat['definition']
-            description = self._clean_text(definition.get('description', ''))
+            description = self.clean_text(definition.get('description', ''))
             description_lines = [line.strip() for line in description.split('\n') if line.strip()]
             
             # Get modifiers for this feat
