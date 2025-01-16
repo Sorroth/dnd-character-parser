@@ -359,32 +359,89 @@ class CharacterParser:
     
     def get_background(self):
         """Extract character background information."""
-        background_data = self.data['data'].get('background', {})
-        if not background_data or not background_data.get('definition'):
+        if 'data' not in self.data or 'background' not in self.data['data']:
+            return None
+        
+        background_data = self.data['data']['background']
+        if 'definition' not in background_data:
             return None
         
         definition = background_data['definition']
         
-        # Split the description into paragraphs and clean each one
-        description = self.clean_text(definition['shortDescription']).split('\n')
-        description = [para for para in description if para.strip()]
+        # Get background proficiencies from data.modifiers.background
+        proficiencies = []
+        if 'data' in self.data and 'modifiers' in self.data['data'] and 'background' in self.data['data']['modifiers']:
+            background_mods = self.data['data']['modifiers']['background']
+            for mod in background_mods:
+                if mod['type'] == 'proficiency' and 'friendlySubtypeName' in mod:
+                    proficiencies.append(mod['friendlySubtypeName'])
         
-        # Start with the Ear to the Ground feature
-        background_bonuses = [
-            {
-                "name": definition['featureName'],
-                "description": [self.clean_text(definition['featureDescription'])]
-            }
-        ]
+        # Get traits from data.traits
+        traits = []
+        additional_traits = []
         
-        # Add proficiencies
-        background_bonuses.extend(self.get_background_proficiencies())
+        traits_data = self.data.get('traits', {})
         
-        return {
-            "name": definition['name'],
-            "description": description,
-            "background_bonuses": background_bonuses
+        # Add personality traits
+        if 'personalityTraits' in traits_data:
+            traits.extend([t.strip() for t in traits_data['personalityTraits'].split('\n') if t.strip()])
+            
+        # Add ideals
+        if 'ideals' in traits_data:
+            traits.append(traits_data['ideals'])
+            
+        # Add bonds
+        if 'bonds' in traits_data:
+            traits.append(traits_data['bonds'])
+            
+        # Add flaws
+        if 'flaws' in traits_data:
+            traits.append(traits_data['flaws'])
+            
+        # Process appearance for additional traits
+        if 'appearance' in traits_data:
+            appearance_lines = traits_data['appearance'].strip().split('\n')
+            current_trait = None
+            current_description = []
+            
+            for line in appearance_lines:
+                line = line.strip()
+                if not line:
+                    if current_trait and current_description:
+                        trait_text = f"{current_trait}: {' '.join(current_description)}"
+                        additional_traits.append(trait_text)
+                        current_trait = None
+                        current_description = []
+                elif not current_trait:
+                    current_trait = line
+                else:
+                    current_description.append(line)
+                    
+            # Add the last trait if there is one
+            if current_trait and current_description:
+                trait_text = f"{current_trait}: {' '.join(current_description)}"
+                additional_traits.append(trait_text)
+        
+        # Construct background object
+        background = {
+            'name': definition['name'],
+            'description': [self.clean_text(definition['shortDescription'])],
+            'background_bonuses': [
+                {
+                    'name': definition['featureName'],
+                    'description': [self.clean_text(definition['featureDescription'])]
+                },
+                {
+                    'proficiencies': proficiencies
+                },
+                {
+                    'traits': traits,
+                    'additional_traits': additional_traits
+                }
+            ]
         }
+        
+        return {'background': background}
     
     def get_characteristics(self):
         """Extract character characteristics."""
