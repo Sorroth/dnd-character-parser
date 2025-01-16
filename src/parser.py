@@ -571,6 +571,61 @@ class CharacterParser:
         
         return feats
     
+    def get_spells(self):
+        """Extract character spells."""
+        spells = []
+        
+        # Create a mapping of item IDs to names
+        item_map = {}
+        for item in self.data['data']['inventory']:
+            if 'definition' in item and 'id' in item['definition']:
+                item_map[item['definition']['id']] = item['definition']['name']
+        
+        spell_data = self.data['data']['spells'].get('item', [])
+        
+        for spell in spell_data:
+            definition = spell['definition']
+            
+            # Clean and format the description
+            description = self._clean_text(definition['description'])
+            
+            # Format duration
+            duration = definition['duration']
+            duration_str = f"{duration['durationInterval']} {duration['durationUnit'].lower()}"
+            if duration['durationType'] == "Concentration":
+                duration_str = f"Concentration, up to {duration_str}"
+            
+            # Format range
+            range_info = definition['range']
+            range_str = range_info['origin']
+            if range_info['rangeValue'] > 0:
+                range_str = f"{range_info['rangeValue']} feet"
+            
+            spell_info = {
+                "name": definition['name'],
+                "level": definition['level'],
+                "school": definition['school'],
+                "casting_time": f"{spell['activation']['activationTime']} action",
+                "range": range_str,
+                "duration": duration_str,
+                "concentration": definition['concentration'],
+                "description": [description],
+                "components": {
+                    "verbal": 1 in definition['components'],
+                    "somatic": 2 in definition['components'],
+                    "material": 3 in definition['components'],
+                    "materials_needed": definition['componentsDescription'] if 3 in definition['components'] else None
+                }
+            }
+            
+            # Add source item if spell comes from an item
+            if spell.get('componentId') and spell['componentId'] in item_map:
+                spell_info["source_item"] = item_map[spell['componentId']]
+            
+            spells.append(spell_info)
+        
+        return sorted(spells, key=lambda x: (x['level'], x['name']))
+    
     def parse(self):
         """Parse character data into desired format."""
         return {
@@ -582,5 +637,6 @@ class CharacterParser:
             "classes": self.get_classes(),
             "feats": self.get_feats(),
             "background": self.get_background(),
+            "spells": self.get_spells(),
             "inventory": self.get_inventory()
         } 
