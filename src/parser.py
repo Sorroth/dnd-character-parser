@@ -574,6 +574,13 @@ class CharacterParser:
     def get_spells(self):
         """Extract character spells."""
         spells = []
+        
+        # Create a mapping of item IDs to names
+        item_map = {}
+        for item in self.data['data']['inventory']:
+            if 'definition' in item and 'id' in item['definition']:
+                item_map[item['definition']['id']] = item['definition']['name']
+        
         spell_data = self.data['data']['spells'].get('item', [])
         
         for spell in spell_data:
@@ -610,6 +617,11 @@ class CharacterParser:
                     "materials_needed": definition['componentsDescription'] if 3 in definition['components'] else None
                 }
             }
+            
+            # Add source item if spell comes from an item
+            if spell.get('componentId') and spell['componentId'] in item_map:
+                spell_info["source_item"] = item_map[spell['componentId']]
+            
             spells.append(spell_info)
         
         return sorted(spells, key=lambda x: (x['level'], x['name']))
