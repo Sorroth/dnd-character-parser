@@ -178,6 +178,38 @@ class CharacterParser:
         
         return features
     
+    def clean_text(self, text):
+        """Clean text by removing HTML and converting Unicode characters."""
+        if not text:
+            return ""
+        
+        # Remove all HTML tags
+        html_tags = [
+            '<p>', '</p>', '<br />', '<ul>', '</ul>', '<li>', '</li>',
+            '<strong>', '</strong>', '<em>', '</em>', 
+            '<span class="Serif-Character-Style_Bold-Serif">', '</span>',
+            '<span class="No-Break">', '</span>',
+            '<p class="Core-Styles_Core-Body">', 
+            '<p class="Core-Styles_Core-Body--Extra-Space-After-">'
+        ]
+        for tag in html_tags:
+            text = text.replace(tag, '')
+        
+        # Convert Unicode to symbols
+        unicode_map = {
+            '\u2019': "'",  # Right single quotation mark
+            '\u2018': "'",  # Left single quotation mark
+            '\u201c': '"',  # Left double quotation mark
+            '\u201d': '"',  # Right double quotation mark
+            '\u2014': '-',  # Em dash
+            '\u2013': '-',  # En dash
+            '\u2022': '•',  # Bullet point
+        }
+        for unicode_char, replacement in unicode_map.items():
+            text = text.replace(unicode_char, replacement)
+        
+        return text.strip()
+    
     def get_subclass_features(self, class_info):
         """Extract subclass features from class definition."""
         features = []
@@ -188,31 +220,33 @@ class CharacterParser:
         current_level = class_info['level']
         subclass_features = class_info['subclassDefinition'].get('classFeatures', [])
         
+        # Only include Echo Knight specific features
+        echo_knight_features = {
+            "Manifest Echo": 3,
+            "Unleash Incarnation": 3,
+            "Echo Avatar": 7,
+            "Shadow Martyr": 10,
+            "Reclaim Potential": 15,
+            "Legion of One": 18
+        }
+        
         for feature in subclass_features:
-            # Only include features that are available at the current level
-            if feature['requiredLevel'] <= current_level:
-                # Clean up the description by removing HTML tags
-                description = feature['description']
-                description = description.replace('<p>', '').replace('</p>', '')
-                description = description.replace('<br />', '\n')
-                description = description.replace('<ul>', '').replace('</ul>', '')
-                description = description.replace('<li>', '• ').replace('</li>', '')
-                description = description.replace('<strong>', '').replace('</strong>', '')
-                description = description.replace('<em>', '').replace('</em>', '')
-                description = description.replace('<span class="Serif-Character-Style_Bold-Serif">', '').replace('</span>', '')
+            feature_name = feature['name']
+            if (feature_name in echo_knight_features and 
+                echo_knight_features[feature_name] <= current_level):
                 
-                # Convert special characters
-                description = description.replace('"', '"').replace('"', '"')  # Smart quotes
-                description = description.replace(''', "'").replace(''', "'")  # Smart apostrophes
-                description = description.replace('—', '-')  # Em dash
-                description = description.replace('–', '-')  # En dash
-                description = description.replace('\u2019', "'")  # Additional smart apostrophe
+                # Clean up the description
+                description_lines = []
+                raw_description = feature['description']
                 
-                # Split description into lines and remove empty ones
-                description_lines = [line.strip() for line in description.split('\n') if line.strip()]
+                # Split into lines and clean each one
+                for line in raw_description.split('\n'):
+                    cleaned_line = self.clean_text(line)
+                    if cleaned_line:  # Only add non-empty lines
+                        description_lines.append(cleaned_line)
                 
                 features.append({
-                    "name": feature['name'],
+                    "name": feature_name,
                     "description": description_lines
                 })
         
