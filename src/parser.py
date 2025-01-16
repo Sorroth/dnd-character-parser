@@ -179,15 +179,36 @@ class CharacterParser:
         return features
     
     def get_subclass_features(self, class_info):
-        """Extract subclass features."""
+        """Extract subclass features from class definition."""
         features = []
         
-        # Get subclass features
-        if class_info.get('subclassDefinition'):
-            subclass_features = class_info['subclassDefinition'].get('classFeatures', [])
-            
-            for feature in subclass_features:
-                description = self._clean_text(feature['description'])
+        if not class_info.get('subclassDefinition'):
+            return features
+        
+        current_level = class_info['level']
+        subclass_features = class_info['subclassDefinition'].get('classFeatures', [])
+        
+        for feature in subclass_features:
+            # Only include features that are available at the current level
+            if feature['requiredLevel'] <= current_level:
+                # Clean up the description by removing HTML tags
+                description = feature['description']
+                description = description.replace('<p>', '').replace('</p>', '')
+                description = description.replace('<br />', '\n')
+                description = description.replace('<ul>', '').replace('</ul>', '')
+                description = description.replace('<li>', '• ').replace('</li>', '')
+                description = description.replace('<strong>', '').replace('</strong>', '')
+                description = description.replace('<em>', '').replace('</em>', '')
+                description = description.replace('<span class="Serif-Character-Style_Bold-Serif">', '').replace('</span>', '')
+                
+                # Convert special characters
+                description = description.replace('"', '"').replace('"', '"')  # Smart quotes
+                description = description.replace(''', "'").replace(''', "'")  # Smart apostrophes
+                description = description.replace('—', '-')  # Em dash
+                description = description.replace('–', '-')  # En dash
+                description = description.replace('\u2019', "'")  # Additional smart apostrophe
+                
+                # Split description into lines and remove empty ones
                 description_lines = [line.strip() for line in description.split('\n') if line.strip()]
                 
                 features.append({

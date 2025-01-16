@@ -264,10 +264,22 @@ def test_subclass_features():
     
     fighter = classes[0]
     assert fighter['subclass']['name'] == 'Echo Knight'
+    assert fighter['base_class']['level'] == 4  # Verify character level
     
     # Check subclass bonuses exist
     assert 'subclass_bonuses' in fighter['subclass']
     subclass_bonuses = fighter['subclass']['subclass_bonuses']
+    
+    # Get all feature names
+    feature_names = [bonus["name"] for bonus in subclass_bonuses]
+    
+    # Check that only features available at level 4 are included
+    assert "Manifest Echo" in feature_names  # Level 3 feature
+    assert "Unleash Incarnation" in feature_names  # Level 3 feature
+    assert "Echo Avatar" not in feature_names  # Level 7 feature
+    assert "Shadow Martyr" not in feature_names  # Level 10 feature
+    assert "Reclaim Potential" not in feature_names  # Level 15 feature
+    assert "Legion of One" not in feature_names  # Level 18 feature
     
     # Check format of features
     for bonus in subclass_bonuses:
@@ -283,6 +295,11 @@ def test_subclass_features():
             assert '&' not in line  # No HTML entities
             # Allow bullet points but no other Unicode
             cleaned_line = line.replace('\u2022', '')  # Remove bullet points
+            # Debug: Print any non-ASCII characters
+            non_ascii = [c for c in cleaned_line if ord(c) >= 128]
+            if non_ascii:
+                print(f"Non-ASCII characters found: {non_ascii}")
+                print(f"In line: {cleaned_line}")
             assert all(ord(c) < 128 for c in cleaned_line)  # Check remaining chars are ASCII
 
 def test_background():
