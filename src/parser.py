@@ -110,19 +110,30 @@ class CharacterParser:
         text = text.replace('<p>', '')
         text = text.replace('<br />', ' ')
         
-        # Convert special characters
+        # Convert HTML entities
         text = text.replace('&ldquo;', '"')
         text = text.replace('&rdquo;', '"')
         text = text.replace('&mdash;', '-')
         text = text.replace('&nbsp;', ' ')
         text = text.replace('&ucirc;', 'u')
-        text = text.replace('\r\n', ' ')
-        text = text.replace('\n', ' ')
+        text = text.replace('&rsquo;', "'")
+        text = text.replace('&lsquo;', "'")
+        
+        # Convert Unicode characters
+        text = text.replace('\u2019', "'")   # right single quotation mark
+        text = text.replace('\u2018', "'")   # left single quotation mark
+        text = text.replace('\u201c', '"')   # left double quotation mark
+        text = text.replace('\u201d', '"')   # right double quotation mark
+        text = text.replace('\u2014', "-")   # em dash
+        text = text.replace('\u2022', "•")   # bullet point
+        text = text.replace('\u00a0', " ")   # non-breaking space
         
         # Clean up whitespace
+        text = text.replace('\r\n', ' ')
+        text = text.replace('\n', ' ')
         text = ' '.join(text.split())
         
-        return text
+        return text.strip()
     
     def get_class_features(self, class_info):
         """Extract class features from class definition."""
