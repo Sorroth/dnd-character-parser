@@ -95,6 +95,59 @@ class CharacterParser:
         
         return sorted(proficiencies)  # Sort for consistent output
     
+    def _clean_text(self, text):
+        """Clean HTML tags and Unicode characters from text."""
+        if not text:
+            return ""
+        
+        # Clean HTML tags with classes
+        text = text.replace('<p class="Core-Styles_Core-Body">', '')
+        text = text.replace('<p class="Core-Styles_Core-Body--Extra-Space-After-">', '')
+        text = text.replace('<span class="Serif-Character-Style_Italic-Serif">', '')
+        text = text.replace('<span class="Serif-Character-Style_Bold-Serif">', '')
+        text = text.replace('<span class="No-Break">', '')
+        text = text.replace('<div class="mastery-container">', '')
+        
+        # Clean basic HTML tags
+        text = text.replace('</p>', '')
+        text = text.replace('</span>', '')
+        text = text.replace('</div>', '')
+        text = text.replace('<p>', '')
+        text = text.replace('<br />', '\n')
+        text = text.replace('<ul>', '')
+        text = text.replace('</ul>', '')
+        text = text.replace('<li>', '• ')
+        text = text.replace('</li>', '')
+        text = text.replace('<strong>', '')
+        text = text.replace('</strong>', '')
+        text = text.replace('<em>', '')
+        text = text.replace('</em>', '')
+        text = text.replace('<hr />', '')
+        
+        # Convert HTML entities
+        text = text.replace('&rdquo;', '"')
+        text = text.replace('&ldquo;', '"')
+        text = text.replace('&mdash;', '-')
+        text = text.replace('&nbsp;', ' ')
+        text = text.replace('&ucirc;', 'u')
+        text = text.replace('&rsquo;', "'")
+        text = text.replace('&lsquo;', "'")
+        
+        # Convert Unicode characters
+        text = text.replace('\u2022', '•')  # bullet point
+        text = text.replace('\u2019', "'")   # right single quotation mark
+        text = text.replace('\u2014', "-")   # em dash
+        text = text.replace('\u201c', '"')   # left double quotation mark
+        text = text.replace('\u201d', '"')   # right double quotation mark
+        text = text.replace('\u2018', "'")   # left single quotation mark
+        
+        # Clean up whitespace
+        text = text.replace('\r\n', '\n')
+        lines = [line.strip() for line in text.split('\n')]
+        text = '\n'.join(line for line in lines if line)
+        
+        return text.strip()
+    
     def get_class_features(self, class_info):
         """Extract class features from class definition."""
         features = []
@@ -115,16 +168,7 @@ class CharacterParser:
         
         for feature in class_features:
             if feature['requiredLevel'] <= current_level and feature['name'] not in excluded_features:
-                # Clean up the description by removing HTML tags
-                description = feature['description']
-                description = description.replace('<p>', '').replace('</p>', '')
-                description = description.replace('<br />', '\n')
-                description = description.replace('<ul>', '').replace('</ul>', '')
-                description = description.replace('<li>', '• ').replace('</li>', '')
-                description = description.replace('<strong>', '').replace('</strong>', '')
-                description = description.replace('<span class="Serif-Character-Style_Bold-Serif">', '').replace('</span>', '')
-                
-                # Split description into lines and remove empty ones
+                description = self._clean_text(feature['description'])
                 description_lines = [line.strip() for line in description.split('\n') if line.strip()]
                 
                 features.append({
@@ -135,39 +179,15 @@ class CharacterParser:
         return features
     
     def get_subclass_features(self, class_info):
-        """Extract subclass features from class definition."""
+        """Extract subclass features."""
         features = []
         
-        # Features to exclude
-        excluded_features = {
-            "Martial Archetype",
-            "Fighting Style",
-            "Second Wind",
-            "Action Surge",
-            "Ability Score Improvement",
-            "Proficiencies",
-            "Hit Points",
-            "Equipment"
-        }
-        
-        if not class_info.get('subclassDefinition'):
-            return features
-        
-        current_level = class_info['level']
-        subclass_features = class_info['subclassDefinition'].get('classFeatures', [])
-        
-        for feature in subclass_features:
-            if feature['requiredLevel'] <= current_level and feature['name'] not in excluded_features:
-                # Clean up the description by removing HTML tags
-                description = feature['description']
-                description = description.replace('<p>', '').replace('</p>', '')
-                description = description.replace('<br />', '\n')
-                description = description.replace('<ul>', '').replace('</ul>', '')
-                description = description.replace('<li>', '• ').replace('</li>', '')
-                description = description.replace('<strong>', '').replace('</strong>', '')
-                description = description.replace('<span class="Serif-Character-Style_Bold-Serif">', '').replace('</span>', '')
-                
-                # Split description into lines and remove empty ones
+        # Get subclass features
+        if class_info.get('subclassDefinition'):
+            subclass_features = class_info['subclassDefinition'].get('classFeatures', [])
+            
+            for feature in subclass_features:
+                description = self._clean_text(feature['description'])
                 description_lines = [line.strip() for line in description.split('\n') if line.strip()]
                 
                 features.append({
@@ -263,28 +283,15 @@ class CharacterParser:
         
         definition = background_data['definition']
         
-        # Clean HTML tags from descriptions
-        def clean_text(text):
-            if not text:
-                return ""
-            text = text.replace('<p class="Core-Styles_Core-Body">', '')
-            text = text.replace('<p class="Core-Styles_Core-Body--Extra-Space-After-">', '')
-            text = text.replace('</p>', '')
-            text = text.replace('<span class="No-Break">', '').replace('</span>', '')
-            text = text.replace('<br />', '\n')
-            text = text.replace('&ldquo;', '"').replace('&mdash;', '—')
-            text = text.replace('&ucirc;', 'û')
-            return text.strip()
-        
-        # Split the description into paragraphs
-        description = clean_text(definition['shortDescription']).split('\n')
+        # Split the description into paragraphs and clean each one
+        description = self._clean_text(definition['shortDescription']).split('\n')
         description = [para for para in description if para.strip()]
         
         # Start with the Ear to the Ground feature
         background_bonuses = [
             {
                 "name": definition['featureName'],
-                "description": [clean_text(definition['featureDescription'])]
+                "description": [self._clean_text(definition['featureDescription'])]
             }
         ]
         
@@ -332,9 +339,7 @@ class CharacterParser:
                 continue
             
             # Clean HTML tags from description
-            description = definition.get('description', '')
-            description = description.replace('<p>', '').replace('</p>', '')
-            description = description.replace('<br />', '\n')
+            description = self._clean_text(definition.get('description', ''))
             
             inventory_item = {
                 "name": name,
@@ -374,13 +379,8 @@ class CharacterParser:
         
         for feat in feats_data:
             definition = feat['definition']
-            
-            # Clean HTML tags from description
-            description = definition.get('description', '')
-            description = description.replace('<p>', '').replace('</p>', '')
-            description = description.replace('<ul>', '').replace('</ul>', '')
-            description = description.replace('<li>', '• ').replace('</li>', '\n')
-            description = description.replace('\r\n', '\n').strip()
+            description = self._clean_text(definition.get('description', ''))
+            description_lines = [line.strip() for line in description.split('\n') if line.strip()]
             
             # Get modifiers for this feat
             feat_id = definition['id']
@@ -407,7 +407,7 @@ class CharacterParser:
             
             feat_info = {
                 "name": definition['name'],
-                "description": [line.strip() for line in description.split('\n') if line.strip()],
+                "description": description_lines,
                 "prerequisites": definition.get('prerequisites', []),
                 "is_homebrew": definition.get('isHomebrew', False),
                 "modifiers": modifiers

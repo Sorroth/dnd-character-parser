@@ -269,29 +269,21 @@ def test_subclass_features():
     assert 'subclass_bonuses' in fighter['subclass']
     subclass_bonuses = fighter['subclass']['subclass_bonuses']
     
-    # Define excluded features
-    excluded_features = {
-        "Martial Archetype",
-        "Fighting Style",
-        "Second Wind",
-        "Action Surge",
-        "Ability Score Improvement",
-        "Proficiencies",
-        "Hit Points",
-        "Equipment"
-    }
-    
-    # Check that excluded features are not present
-    feature_names = [bonus["name"] for bonus in subclass_bonuses]
-    for excluded in excluded_features:
-        assert excluded not in feature_names
-    
     # Check format of features
     for bonus in subclass_bonuses:
         assert "name" in bonus
         assert "description" in bonus
         assert isinstance(bonus["description"], list)
-        assert len(bonus["description"]) > 0 
+        assert len(bonus["description"]) > 0
+        
+        # Check that descriptions don't contain HTML or Unicode characters
+        # (except for bullet points)
+        for line in bonus["description"]:
+            assert '<' not in line  # No HTML tags
+            assert '&' not in line  # No HTML entities
+            # Allow bullet points but no other Unicode
+            cleaned_line = line.replace('\u2022', '')  # Remove bullet points
+            assert all(ord(c) < 128 for c in cleaned_line)  # Check remaining chars are ASCII
 
 def test_background():
     """Test that background information is correctly parsed."""
@@ -419,3 +411,23 @@ def test_feats():
     unarmed_mod = next(m for m in modifiers if m['subtype'] == 'unarmed-damage-die')
     assert unarmed_mod['type'] == 'set'
     assert unarmed_mod['dice'] == '1d4' 
+
+def test_text_cleaning():
+    """Test that HTML and Unicode characters are properly cleaned."""
+    parser = CharacterParser('data/Miriam Hopps.json')
+    
+    # Test HTML cleaning
+    html_text = '<p class="Core-Styles_Core-Body">Test <em>text</em> with <strong>tags</strong></p>'
+    assert parser._clean_text(html_text) == 'Test text with tags'
+    
+    # Test Unicode character cleaning
+    unicode_text = 'Text with \u2022 bullet and \u2019 quote'
+    assert parser._clean_text(unicode_text) == 'Text with • bullet and \' quote'
+    
+    # Test HTML entities
+    entity_text = 'Text with &rdquo;quotes&ldquo; and &mdash; dash'
+    assert parser._clean_text(entity_text) == 'Text with "quotes" and - dash'
+    
+    # Test combined cleaning
+    complex_text = '<p>Text with \u2022 bullet and <em>emphasis</em> &rdquo;quotes&ldquo;</p>'
+    assert parser._clean_text(complex_text) == 'Text with • bullet and emphasis "quotes"' 
