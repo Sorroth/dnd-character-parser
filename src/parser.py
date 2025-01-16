@@ -96,57 +96,33 @@ class CharacterParser:
         return sorted(proficiencies)  # Sort for consistent output
     
     def _clean_text(self, text):
-        """Clean HTML tags and Unicode characters from text."""
+        """Clean HTML tags and special characters from text."""
         if not text:
             return ""
         
-        # Clean HTML tags with classes
+        # Remove HTML tags
         text = text.replace('<p class="Core-Styles_Core-Body">', '')
         text = text.replace('<p class="Core-Styles_Core-Body--Extra-Space-After-">', '')
-        text = text.replace('<span class="Serif-Character-Style_Italic-Serif">', '')
-        text = text.replace('<span class="Serif-Character-Style_Bold-Serif">', '')
         text = text.replace('<span class="No-Break">', '')
-        text = text.replace('<div class="mastery-container">', '')
-        
-        # Clean basic HTML tags
-        text = text.replace('</p>', '')
+        text = text.replace('<span class="Serif-Character-Style_Italic-Serif">', '')
         text = text.replace('</span>', '')
-        text = text.replace('</div>', '')
+        text = text.replace('</p>', '')
         text = text.replace('<p>', '')
-        text = text.replace('<br />', '\n')
-        text = text.replace('<ul>', '')
-        text = text.replace('</ul>', '')
-        text = text.replace('<li>', '• ')
-        text = text.replace('</li>', '')
-        text = text.replace('<strong>', '')
-        text = text.replace('</strong>', '')
-        text = text.replace('<em>', '')
-        text = text.replace('</em>', '')
-        text = text.replace('<hr />', '')
+        text = text.replace('<br />', ' ')
         
-        # Convert HTML entities
-        text = text.replace('&rdquo;', '"')
+        # Convert special characters
         text = text.replace('&ldquo;', '"')
+        text = text.replace('&rdquo;', '"')
         text = text.replace('&mdash;', '-')
         text = text.replace('&nbsp;', ' ')
         text = text.replace('&ucirc;', 'u')
-        text = text.replace('&rsquo;', "'")
-        text = text.replace('&lsquo;', "'")
-        
-        # Convert Unicode characters
-        text = text.replace('\u2022', '•')  # bullet point
-        text = text.replace('\u2019', "'")   # right single quotation mark
-        text = text.replace('\u2014', "-")   # em dash
-        text = text.replace('\u201c', '"')   # left double quotation mark
-        text = text.replace('\u201d', '"')   # right double quotation mark
-        text = text.replace('\u2018', "'")   # left single quotation mark
+        text = text.replace('\r\n', ' ')
+        text = text.replace('\n', ' ')
         
         # Clean up whitespace
-        text = text.replace('\r\n', '\n')
-        lines = [line.strip() for line in text.split('\n')]
-        text = '\n'.join(line for line in lines if line)
+        text = ' '.join(text.split())
         
-        return text.strip()
+        return text
     
     def get_class_features(self, class_info):
         """Extract class features from class definition."""
@@ -359,32 +335,83 @@ class CharacterParser:
     
     def get_background(self):
         """Extract character background information."""
-        background_data = self.data['data'].get('background', {})
-        if not background_data or not background_data.get('definition'):
+        if 'data' not in self.data or 'background' not in self.data['data']:
+            return None
+        
+        background_data = self.data['data']['background']
+        if 'definition' not in background_data:
             return None
         
         definition = background_data['definition']
         
-        # Split the description into paragraphs and clean each one
-        description = self.clean_text(definition['shortDescription']).split('\n')
-        description = [para for para in description if para.strip()]
+        # Clean and format the description text
+        description = self._clean_text(definition['shortDescription'])
         
-        # Start with the Ear to the Ground feature
-        background_bonuses = [
-            {
-                "name": definition['featureName'],
-                "description": [self.clean_text(definition['featureDescription'])]
-            }
-        ]
+        # Get background proficiencies
+        proficiencies = []
+        background_mods = self.data['data']['modifiers'].get('background', [])
+        for mod in background_mods:
+            if mod['type'] == 'proficiency':
+                prof_name = mod['friendlySubtypeName']
+                proficiencies.append(prof_name)
         
-        # Add proficiencies
-        background_bonuses.extend(self.get_background_proficiencies())
+        # Get traits from data.traits
+        traits_data = self.data['data'].get('traits', {})
+        traits = []
         
-        return {
+        # Add personality traits
+        if traits_data.get('personalityTraits'):
+            traits.extend([t.strip() for t in traits_data['personalityTraits'].split('\n') if t.strip()])
+        
+        # Add ideals, bonds, and flaws
+        for trait_type in ['ideals', 'bonds', 'flaws']:
+            if traits_data.get(trait_type):
+                traits.append(traits_data[trait_type].strip())
+        
+        # Process appearance for additional traits
+        additional_traits = []
+        if traits_data.get('appearance'):
+            lines = traits_data['appearance'].split('\n')
+            current_header = None
+            current_description = []
+            
+            for line in lines:
+                line = line.strip()
+                if not line:  # Skip empty lines
+                    continue
+                    
+                # If line doesn't have a colon and no current header, it might be a header
+                if ':' not in line and not current_header:
+                    current_header = line
+                # If we have a header and this line doesn't have a colon, it's part of the description
+                elif current_header and ':' not in line:
+                    current_description.append(line)
+                    # Add the complete trait and reset
+                    trait = f"{current_header}: {line}"
+                    additional_traits.append(trait)
+                    current_header = None
+                    current_description = []
+        
+        # Construct background object
+        background = {
             "name": definition['name'],
-            "description": description,
-            "background_bonuses": background_bonuses
+            "description": [description],
+            "background_bonuses": [
+                {
+                    "name": definition['featureName'],
+                    "description": [self._clean_text(definition['featureDescription'])]
+                },
+                {
+                    "proficiencies": sorted(proficiencies)
+                },
+                {
+                    "traits": traits,
+                    "additional_traits": additional_traits
+                }
+            ]
         }
+        
+        return background
     
     def get_characteristics(self):
         """Extract character characteristics."""
