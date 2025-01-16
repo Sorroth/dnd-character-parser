@@ -454,47 +454,19 @@ class CharacterParser:
         return inventory
     
     def get_feats(self):
-        """Extract character feats and their modifiers."""
-        feats_data = self.data['data'].get('feats', [])
-        feat_modifiers = self.data['data']['modifiers'].get('feat', [])
+        """Extract character feats."""
         feats = []
         
-        for feat in feats_data:
-            definition = feat['definition']
-            description = self.clean_text(definition.get('description', ''))
-            description_lines = [line.strip() for line in description.split('\n') if line.strip()]
-            
-            # Get modifiers for this feat
-            feat_id = definition['id']
-            modifiers = []
-            for mod in feat_modifiers:
-                if mod['componentId'] == feat_id:
-                    modifier = {
-                        "type": mod['type'],
-                        "subtype": mod['subType'],
-                        "friendly_name": mod['friendlySubtypeName']
+        if 'data' in self.data and 'feats' in self.data['data']:
+            for feat_data in self.data['data']['feats']:
+                if 'definition' in feat_data:
+                    feat = feat_data['definition']
+                    feat_info = {
+                        'name': feat['name'],
+                        'description': [self.clean_text(feat['description'])],
+                        'modifiers': []  # We'll keep modifiers for now
                     }
-                    
-                    # Add value if present
-                    if mod.get('value') is not None:
-                        modifier['value'] = mod['value']
-                    elif mod.get('fixedValue') is not None:
-                        modifier['value'] = mod['fixedValue']
-                    
-                    # Add dice if present
-                    if mod.get('dice') is not None:
-                        modifier['dice'] = mod['dice']['diceString']
-                    
-                    modifiers.append(modifier)
-            
-            feat_info = {
-                "name": definition['name'],
-                "description": description_lines,
-                "prerequisites": definition.get('prerequisites', []),
-                "is_homebrew": definition.get('isHomebrew', False),
-                "modifiers": modifiers
-            }
-            feats.append(feat_info)
+                    feats.append(feat_info)
         
         return feats
     
