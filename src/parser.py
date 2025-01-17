@@ -404,7 +404,8 @@ class CharacterParser:
                     current_description.append(line)
                     # Add the complete trait and reset
                     trait = f"{current_header}: {line}"
-                    additional_traits.append(trait)
+                    # Clean the trait text before adding
+                    additional_traits.append(self._clean_text(trait))
                     current_header = None
                     current_description = []
         
