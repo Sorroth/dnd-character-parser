@@ -337,9 +337,19 @@ def test_background():
     
     # Test basic structure
     assert background['name'] == 'Urban Bounty Hunter'
-    assert isinstance(background['description'], list)
-    assert len(background['description']) == 1
-    assert "Before you became an adventurer" in background['description'][0]
+    
+    # Test backstory
+    assert 'backstory' in background
+    assert isinstance(background['backstory'], list)
+    assert len(background['backstory']) == 1
+    assert "Miriam Hopps grew up in the quaint village of Greenest" in background['backstory'][0]
+    
+    # Test text cleaning in backstory
+    backstory = background['backstory'][0]
+    assert '<' not in backstory  # No HTML tags
+    assert '&' not in backstory  # No HTML entities
+    assert '\u2019' not in backstory  # No right single quotation mark
+    assert '\u00a0' not in backstory  # No non-breaking space
     
     # Test that Unicode characters are properly cleaned
     description = background['description'][0]
