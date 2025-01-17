@@ -355,6 +355,11 @@ class CharacterParser:
         
         definition = background_data['definition']
         
+        # Get backstory from notes
+        backstory = None
+        if 'notes' in self.data['data'] and 'backstory' in self.data['data']['notes']:
+            backstory = self._clean_text(self.data['data']['notes']['backstory'])
+        
         # Clean and format the description text
         description = self._clean_text(definition['shortDescription'])
         
@@ -406,6 +411,7 @@ class CharacterParser:
         # Construct background object
         background = {
             "name": definition['name'],
+            "backstory": [backstory] if backstory else [],
             "description": [description],
             "background_bonuses": [
                 {
